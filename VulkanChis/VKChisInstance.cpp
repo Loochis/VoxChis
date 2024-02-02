@@ -61,7 +61,7 @@ namespace VKChis {
     // Indirect initializtion
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cppcoreguidelines-pro-type-member-init"
-    VKChisInstance::VKChisInstance(GLFWwindow &in_window, bool enableValidation) {
+    VKChisInstance::VKChisInstance(WINChis::WINChisInstance &in_window, bool enableValidation) {
         window = &in_window;
         enableValidationLayers = enableValidation;
 
@@ -69,12 +69,12 @@ namespace VKChis {
 
         // Initialize instance
         InitInstance(result);
-        if (result) { throw std::runtime_error("/// FATAL ERROR /// - Failed to create VKInstance"); exit(1);}
+        if (result) throw std::runtime_error("/// FATAL ERROR /// - Failed to create VKInstance");
         else        std::cout << "/// GOOD /// - Created VKInstance"  << std::endl;
 
         // Initialize Surface
-        *surface = VKChisSurface(instance, *window, result);
-        if (result) { throw std::runtime_error("/// FATAL ERROR /// - Failed to create Surface!"); exit(1);}
+        surface = VKChisSurface(instance, window->window, result);
+        if (result) throw std::runtime_error("/// FATAL ERROR /// - Failed to create Surface!");
         else        std::cout << "/// GOOD /// - Created Surface"  << std::endl;
 
         // Create Physical Device
@@ -96,5 +96,13 @@ namespace VKChis {
         // Create Sync Objects
 
     }
+
+    VKChisInstance::~VKChisInstance() {
+        // CLEANUP POINTER REFS
+        //delete(surface);
+
+        vkDestroyInstance(instance, nullptr);
+    }
+
 #pragma clang diagnostic pop
 } // VKChis

@@ -2,6 +2,8 @@
 // Created by loochis on 1/28/24.
 //
 
+#include <stdexcept>
+#include <iostream>
 #include "WINChisInstance.h"
 
 namespace WINChis {
@@ -12,5 +14,8 @@ namespace WINChis {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);     // Enable resizing
 
         window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+
+        if (window == nullptr)  throw std::runtime_error("/// FATAL ERROR /// - Failed to create Window!");
+        else                    std::cout << "/// GOOD /// - Created Window"  << std::endl;
     }
 } // WINChis

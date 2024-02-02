@@ -13,8 +13,11 @@ namespace VKChis {
     class VKChisSurface {
     public:
         VkSurfaceKHR surface;
-        VKChisSurface(VkInstance &in_instance, GLFWwindow &in_window, VkResult &result);
+        VKChisSurface() = default;
+        VKChisSurface(VkInstance &in_instance, GLFWwindow *in_window, VkResult &result);
+
         ~VKChisSurface();
+
     private:
         VkInstance instance;
         GLFWwindow* window;

@@ -9,6 +9,7 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 // VKCHIS INCLUDES
+#include "WINChisInstance.h"
 #include "VKCDebugMessenger.h"
 #include "VKChisValidator.h"
 #include "VKChisSurface.h"
@@ -19,10 +20,12 @@ namespace VKChis {
     public:
         bool enableValidationLayers;
         VkInstance instance;
-        GLFWwindow *window;
-        VKChisSurface *surface;
+        WINChis::WINChisInstance *window;
+        VKChisSurface surface;
 
-        explicit VKChisInstance(GLFWwindow &in_window, bool enableValidation);
+        explicit VKChisInstance(WINChis::WINChisInstance &in_window, bool enableValidation);
+
+        ~VKChisInstance();
     private:
         VKCDebugMessenger debugMessenger;
 
