@@ -6,7 +6,7 @@
 #include <iostream>
 #include "WINChisInstance.h"
 
-namespace WINChis {
+namespace VKChis {
     WINChisInstance::WINChisInstance(int width, int height, const std::string& title) {
         glfwInit();
 
@@ -17,5 +17,11 @@ namespace WINChis {
 
         if (window == nullptr)  throw std::runtime_error("/// FATAL ERROR /// - Failed to create Window!");
         else                    std::cout << "/// GOOD /// - Created Window"  << std::endl;
+    }
+
+    WINChisInstance::~WINChisInstance() {
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        std::cout << "/// CLEAN /// - Destroyed Window"  << std::endl;
     }
 } // WINChis

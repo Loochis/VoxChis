@@ -19,9 +19,8 @@ namespace VKChis {
 
         static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
 
-        // CONSTRUCTORS
-        VKCDebugMessenger();
-        VKCDebugMessenger(VkInstance &in_instance, VkResult &result);
+        // CONSTRUCTOR
+        VKCDebugMessenger(VkInstance in_instance, VkResult &result);
 
         // DESTRUCTOR
         ~VKCDebugMessenger();
@@ -30,7 +29,6 @@ namespace VKChis {
     private:
         VkInstance instance;
         VkDebugUtilsMessengerEXT debugMessenger;
-
     };
 }
 

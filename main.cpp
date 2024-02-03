@@ -1,14 +1,15 @@
 #include <iostream>
+#include <memory>
 #include "VulkanChis/WINChisInstance.h"
-#include "VulkanChis/VKChisInstance.h"
+#include "VulkanChis/VKCManager.h"
 
-using namespace WINChis;
 using namespace VKChis;
 
 int main() {
 
-    WINChisInstance wcInst = WINChisInstance(800, 600, "test");
-    VKChisInstance vkcInst = VKChisInstance(wcInst, true);
+    std::shared_ptr<WINChisInstance> wcInst = std::make_shared<WINChisInstance>(800, 600, "test");
+
+    VKCManager vkcMan = VKCManager(wcInst, VALIDATION_LAYER);
 
     std::cout << "Hello, World!" << std::endl;
     return 0;

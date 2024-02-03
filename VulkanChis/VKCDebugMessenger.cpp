@@ -26,31 +26,33 @@ void VKCDebugMessenger::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCr
     createInfo.pfnUserCallback = debugCallback;
 }
 
-VKCDebugMessenger::VKCDebugMessenger() = default;
-
 // clang whines about not initializing debugCreateInfo and debugMessenger. They get set but indirectly
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cppcoreguidelines-pro-type-member-init"
-VKCDebugMessenger::VKCDebugMessenger(VkInstance &in_instance, VkResult &result) {
-    instance = in_instance;
+VKCDebugMessenger::VKCDebugMessenger(VkInstance in_instance, VkResult &result)
+: instance(in_instance)
+{
 
     populateDebugMessengerCreateInfo(debugCreateInfo);
 
-    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+    // SEGFAULT
+    /*auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 
     if (func != nullptr) {
         result = func(instance, &debugCreateInfo, nullptr, &debugMessenger);
     } else {
         result = VK_ERROR_EXTENSION_NOT_PRESENT;
     }
+     */
+    result = VK_ERROR_EXTENSION_NOT_PRESENT;
 }
 #pragma clang diagnostic pop
 
 VKCDebugMessenger::~VKCDebugMessenger() {
-    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance,
-                                                                            "vkDestroyDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        func(instance, debugMessenger, nullptr);
-    }
+    //auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance,
+    //                                                                        "vkDestroyDebugUtilsMessengerEXT");
+    //if (func != nullptr) {
+    //    func(instance, debugMessenger, nullptr);
+    //}
 }
 

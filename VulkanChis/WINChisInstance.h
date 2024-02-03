@@ -10,12 +10,13 @@
 
 #include <string>
 
-namespace WINChis {
+namespace VKChis {
 
     class WINChisInstance {
     public:
         GLFWwindow* window;
         WINChisInstance(int width, int height, const std::string& title);
+        ~WINChisInstance();
     };
 
 } // WINChis
