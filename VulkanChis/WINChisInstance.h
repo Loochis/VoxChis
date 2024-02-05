@@ -15,8 +15,10 @@ namespace VKChis {
     class WINChisInstance {
     public:
         GLFWwindow* window;
-        WINChisInstance(int width, int height, const std::string& title);
+        WINChisInstance(uint32_t in_flags, int width, int height, const std::string& title);
         ~WINChisInstance();
+    private:
+        uint32_t flags;
     };
 
 } // WINChis

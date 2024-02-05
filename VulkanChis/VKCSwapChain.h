@@ -13,14 +13,19 @@
 
 namespace VKChis {
 
+    // VKC SWAPCHAIN IS ALSO RESPONSIBLE FOR IT'S OWN IMAGE VIEWS
+
     class VKCSwapChain {
     public:
         VkSwapchainKHR swapChain;
         std::vector<VkImage> swapChainImages;
+        std::vector<VkImageView> swapChainImageViews;
+        std::vector<VkFramebuffer> swapChainFramebuffers;
         VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
 
-        VKCSwapChain(VkSurfaceKHR in_surface,
+        VKCSwapChain(uint32_t in_flags,
+                     VkSurfaceKHR in_surface,
                      VkDevice in_device,
                      GLFWwindow *in_window,
                      QueueFamilyIndices &in_indices,
@@ -28,7 +33,12 @@ namespace VKChis {
                      VkResult &result);
 
         ~VKCSwapChain();
+
+        // Framebuffers
+        void createFrameBuffers(VkRenderPass renderPass);
     private:
+        uint32_t flags;
+
         VkSurfaceKHR surface;
         VkDevice device;
         GLFWwindow *window;
@@ -36,9 +46,13 @@ namespace VKChis {
         QueueFamilyIndices indices;
         SwapChainSupportDetails swapChainSupport;
 
+        // Swapchain selector functions
         static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
         static VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
         VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
+        // Image view creation/deletion
+        void createImageViews();
     };
 
 } // VKChis

@@ -6,9 +6,14 @@
 #include <iostream>
 #include "WINChisInstance.h"
 #include "Utils/ColorMessages.h"
+#include "Utils/VKCEnumerations.h"
 
 namespace VKChis {
-    WINChisInstance::WINChisInstance(int width, int height, const std::string& title) {
+    WINChisInstance::WINChisInstance(uint32_t in_flags, int width, int height, const std::string& title)
+    :   flags(in_flags)
+    {
+        bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
+
         glfwInit();
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);   // Tell GLFW not to create OpenGL context
@@ -17,12 +22,14 @@ namespace VKChis {
         window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 
         if (window == nullptr)  throw std::runtime_error("/// FATAL ERROR /// - Failed to create Window!");
-        else                    print_colored("/// GOOD /// - Created Window", GREEN);
+        if (enableValidation)              print_colored("/// GOOD /// - Created Window", GREEN);
     }
 
     WINChisInstance::~WINChisInstance() {
+        bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
+
         glfwDestroyWindow(window);
         glfwTerminate();
-        print_colored("/// CLEAN /// - Destroyed Window", CYAN);
+        if (enableValidation) print_colored("/// CLEAN /// - Destroyed Window", CYAN);
     }
 } // WINChis

@@ -20,10 +20,12 @@ namespace VKChis {
     public:
         VkInstance instance;
 
-        VKCInstance(uint32_t flags, const std::vector<const char*> &validationLayers, VkResult &result);
+        VKCInstance(uint32_t in_flags, const std::vector<const char*> &validationLayers, VkResult &result);
         ~VKCInstance();
 
     private:
+        uint32_t flags;
+
         std::unique_ptr<VKCDebugMessenger> debugMessenger;
         static std::vector<const char*> getRequiredExtensions();
     };

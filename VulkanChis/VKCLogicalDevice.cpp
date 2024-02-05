@@ -10,12 +10,13 @@
 #include "Utils/ColorMessages.h"
 
 namespace VKChis {
-    VKCLogicalDevice::VKCLogicalDevice(uint32_t flags,
+    VKCLogicalDevice::VKCLogicalDevice(uint32_t in_flags,
                                        std::vector<const char*> in_validationLayers,
                                        std::vector<const char*> in_deviceExtensions,
                                        VkInstance in_instance, VkSurfaceKHR in_surface,
                                        VkResult &result)
-    :   validationLayers(std::move(in_validationLayers)),
+    :   flags(in_flags),
+        validationLayers(std::move(in_validationLayers)),
         deviceExtensions(std::move(in_deviceExtensions)),
         instance(in_instance),
         surface(in_surface)
@@ -211,7 +212,9 @@ namespace VKChis {
     }
 
     VKCLogicalDevice::~VKCLogicalDevice() {
+        bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
+
         vkDestroyDevice(device, nullptr);
-        print_colored("/// CLEAN /// - Destroyed Device", CYAN);
+        if (enableValidation) print_colored("/// CLEAN /// - Destroyed Device", CYAN);
     }
 } // VKChis

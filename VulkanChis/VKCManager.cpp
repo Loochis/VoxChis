@@ -24,7 +24,7 @@ namespace VKChis {
         if (enableValidation)  print_colored("/// GOOD /// - Created VKInstance", GREEN);
 
         // Initialize Surface
-        surface = std::make_unique<VKCSurface>(instance->instance, window->window, result);
+        surface = std::make_unique<VKCSurface>(flags, instance->instance, window->window, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// - Failed to create Surface!");
         if (enableValidation)  print_colored("/// GOOD /// - Created VKSurfaceKHR", GREEN);
 
@@ -34,13 +34,17 @@ namespace VKChis {
         if (enableValidation)  print_colored("/// GOOD /// - Created Logical Device", GREEN);
 
         // Create Swap Chain
-        swapChain = std::make_unique<VKCSwapChain>(surface->surface, device->device, window->window, device->indices, device->swapChainSupport, result);
+        swapChain = std::make_unique<VKCSwapChain>(flags, surface->surface, device->device, window->window, device->indices, device->swapChainSupport, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create SwapChain!");
         if (enableValidation)  print_colored("/// GOOD /// - Created SwapChain", GREEN);
 
-        // Create Image Views
-
         // Create Render Pass
+        renderPass = std::make_unique<VKCRenderPass>(flags, device->device, swapChain->swapChainImageFormat, result);
+        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Render Pass!");
+        if (enableValidation)  print_colored("/// GOOD /// - Created Render Pass", GREEN);
+
+        // Create Framebuffer
+        swapChain->createFrameBuffers(renderPass->renderPass);
 
         // Create GFX Pipeline
 

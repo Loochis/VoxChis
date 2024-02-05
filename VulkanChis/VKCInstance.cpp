@@ -8,7 +8,9 @@
 
 namespace VKChis {
 
-    VKCInstance::VKCInstance(uint32_t flags, const std::vector<const char*> &validationLayers, VkResult &result) {
+    VKCInstance::VKCInstance(uint32_t in_flags, const std::vector<const char*> &validationLayers, VkResult &result)
+    :   flags(in_flags)
+    {
 
         bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
@@ -73,7 +75,9 @@ namespace VKChis {
 
 
     VKCInstance::~VKCInstance() {
+        bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
+
         vkDestroyInstance(instance, nullptr);
-        print_colored("/// CLEAN /// - Destroyed Instance", CYAN);
+        if (enableValidation) print_colored("/// CLEAN /// - Destroyed Instance", CYAN);
     }
 } // VKChis

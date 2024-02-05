@@ -23,7 +23,7 @@ namespace VKChis {
         VkQueue graphicsQueue;
         VkQueue presentQueue;
 
-        explicit VKCLogicalDevice(uint32_t flags,
+        explicit VKCLogicalDevice(uint32_t in_flags,
                                   std::vector<const char*> in_validationLayers,
                                   std::vector<const char*> in_deviceExtensions,
                                   VkInstance in_instance,
@@ -31,6 +31,7 @@ namespace VKChis {
                                   VkResult &result);
         ~VKCLogicalDevice();
     private:
+        uint32_t flags;
 
         VkInstance instance;
         VkSurfaceKHR surface;
