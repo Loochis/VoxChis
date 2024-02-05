@@ -10,13 +10,9 @@
 #include <vector>
 
 namespace VKChis {
-    const std::vector<const char*> validationLayers = {
-            "VK_LAYER_KHRONOS_validation"
-    };
-
     class VKCValidator {
     public:
-        static bool checkValidationLayerSupport();
+        static bool checkValidationLayerSupport(const std::vector<const char*>& validationLayers);
     };
 
 } // VKChis

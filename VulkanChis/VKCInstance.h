@@ -20,7 +20,7 @@ namespace VKChis {
     public:
         VkInstance instance;
 
-        VKCInstance(vkc_InitFlags flags, VkResult &result);
+        VKCInstance(uint32_t flags, const std::vector<const char*> &validationLayers, VkResult &result);
         ~VKCInstance();
 
     private:

@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <iostream>
 #include "VKCSurface.h"
+#include "Utils/ColorMessages.h"
 
 namespace VKChis {
     VKCSurface::VKCSurface(VkInstance in_instance, GLFWwindow *window, VkResult &result) : instance(in_instance) {
@@ -15,6 +16,6 @@ namespace VKChis {
 
     VKCSurface::~VKCSurface() {
         vkDestroySurfaceKHR(instance, surface, nullptr);
-        std::cout << "/// CLEAN /// - Destroyed Surface" << std::endl;
+        print_colored("/// CLEAN /// - Destroyed Surface", CYAN);
     }
 } // VKChis

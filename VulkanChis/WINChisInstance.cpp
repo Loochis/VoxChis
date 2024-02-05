@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <iostream>
 #include "WINChisInstance.h"
+#include "Utils/ColorMessages.h"
 
 namespace VKChis {
     WINChisInstance::WINChisInstance(int width, int height, const std::string& title) {
@@ -16,12 +17,12 @@ namespace VKChis {
         window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 
         if (window == nullptr)  throw std::runtime_error("/// FATAL ERROR /// - Failed to create Window!");
-        else                    std::cout << "/// GOOD /// - Created Window"  << std::endl;
+        else                    print_colored("/// GOOD /// - Created Window", GREEN);
     }
 
     WINChisInstance::~WINChisInstance() {
         glfwDestroyWindow(window);
         glfwTerminate();
-        std::cout << "/// CLEAN /// - Destroyed Window"  << std::endl;
+        print_colored("/// CLEAN /// - Destroyed Window", CYAN);
     }
 } // WINChis

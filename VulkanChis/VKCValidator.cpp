@@ -6,7 +6,7 @@
 #include "VKCValidator.h"
 
 namespace VKChis {
-    bool VKCValidator::checkValidationLayerSupport() {
+    bool VKCValidator::checkValidationLayerSupport(const std::vector<const char*>& validationLayers) {
         uint32_t layerCount;
         // call once to get count
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);

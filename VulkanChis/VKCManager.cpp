@@ -3,32 +3,40 @@
 //
 
 #include "VKCManager.h"
+#include "Utils/ColorMessages.h"
 
 #include <memory>
 #include <utility>
 
+using namespace std;
+
 namespace VKChis {
-    VKCManager::VKCManager(std::shared_ptr<WINChisInstance> in_window, vkc_InitFlags in_flags)
+    VKCManager::VKCManager(std::shared_ptr<WINChisInstance> in_window, uint32_t in_flags)
     : window(std::move(in_window)), flags(in_flags)
     {
+        bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
         VkResult result;
 
         // Initialize instance
-        instance = std::make_unique<VKCInstance>(flags, result);
+        instance = std::make_unique<VKCInstance>(flags, validationLayers, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// - Failed to create VKInstance");
-        else        std::cout << "/// GOOD /// - Created VKInstance"  << std::endl;
+        if (enableValidation)  print_colored("/// GOOD /// - Created VKInstance", GREEN);
 
         // Initialize Surface
         surface = std::make_unique<VKCSurface>(instance->instance, window->window, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// - Failed to create Surface!");
-        else        std::cout << "/// GOOD /// - Created Surface"  << std::endl;
-
-        // Create Physical Device
+        if (enableValidation)  print_colored("/// GOOD /// - Created VKSurfaceKHR", GREEN);
 
         // Create Logical Device
+        device = std::make_unique<VKCLogicalDevice>(flags, validationLayers, deviceExtensions, instance->instance, surface->surface, result);
+        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Logical Device!");
+        if (enableValidation)  print_colored("/// GOOD /// - Created Logical Device", GREEN);
 
         // Create Swap Chain
+        swapChain = std::make_unique<VKCSwapChain>(surface->surface, device->device, window->window, device->indices, device->swapChainSupport, result);
+        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create SwapChain!");
+        if (enableValidation)  print_colored("/// GOOD /// - Created SwapChain", GREEN);
 
         // Create Image Views
 
@@ -43,7 +51,7 @@ namespace VKChis {
         // Create Sync Objects
 
 
-        std::cout << "/// DONE /// - "  << std::endl;
+        if (enableValidation) print_colored("\n/// DONE INITIALIZATION ///\n", MAGENTA);
     }
 
     VKCManager::~VKCManager() = default;

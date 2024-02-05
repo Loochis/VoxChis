@@ -4,14 +4,15 @@
 
 #include "VKCInstance.h"
 #include <stdexcept>
+#include "Utils/ColorMessages.h"
 
 namespace VKChis {
 
-    VKCInstance::VKCInstance(vkc_InitFlags flags, VkResult &result) {
+    VKCInstance::VKCInstance(uint32_t flags, const std::vector<const char*> &validationLayers, VkResult &result) {
 
-        bool enableValidation = flags & VALIDATION_LAYER;
+        bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
-        if (enableValidation && !VKCValidator::checkValidationLayerSupport()) {
+        if (enableValidation && !VKCValidator::checkValidationLayerSupport(validationLayers)) {
             throw std::runtime_error("validation layers requested, but not available!");
         }
 
@@ -46,10 +47,8 @@ namespace VKChis {
             // SEGFAULT HERE
             debugMessenger = std::make_unique<VKCDebugMessenger>(instance, result);
 
-            if (result) {
-                std::cout << "/// WARNING /// - Failed to create debugMessenger (" << std::to_string(result) << ")"
-                          << std::endl;
-            }
+            if (result)
+                print_colored("/// WARNING /// - Failed to create debugMessenger", YELLOW);
 
             createInfo.pNext = &(debugMessenger->debugCreateInfo);
         } else {
@@ -75,6 +74,6 @@ namespace VKChis {
 
     VKCInstance::~VKCInstance() {
         vkDestroyInstance(instance, nullptr);
-        std::cout << "/// CLEAN /// - Destroyed Instance"  << std::endl;
+        print_colored("/// CLEAN /// - Destroyed Instance", CYAN);
     }
 } // VKChis
