@@ -48,6 +48,32 @@ namespace VKChis {
 
         // Create GFX Pipeline
 
+        // TESTING
+
+        string shader_dir = "/home/loochis/CLionProjects/VoxChis/Shaders/";
+
+        std::vector<std::string> shader_loadstrs {"shader.frag", "shader.vert"};
+
+
+        shader_modules.reserve(shader_loadstrs.size());
+
+        for (int i = 0; i < shader_loadstrs.size(); i++) {
+            string shader_path = shader_dir + shader_loadstrs[i];
+            shader_modules[i] = std::make_unique<VKCShaderModule>(flags, shader_path, device->device, result);
+            if (enableValidation) {
+                if (result) print_colored("/// WARN /// - Could not load shader " + shader_modules[i]->comp_visname, YELLOW);
+                else print_colored("/// INFO /// - Loaded " + shader_modules[i]->comp_visname, WHITE);
+            }
+        }
+
+        // !!! HAVE TO MANUALLY RESET UNIQUE_PTRS IN VECTOR !!!
+
+        for (int i = 0; i < shader_loadstrs.size(); i++) {
+            shader_modules[i].reset();
+        }
+
+        // END TESTING
+
         // Create Command Pool
 
         // Create Command Buffers

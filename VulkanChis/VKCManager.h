@@ -14,6 +14,7 @@
 #include "VKCLogicalDevice.h"
 #include "VKCSwapChain.h"
 #include "VKCRenderPass.h"
+#include "VKCShaderModule.h"
 
 namespace VKChis {
 
@@ -35,6 +36,7 @@ namespace VKChis {
         std::unique_ptr<VKCLogicalDevice> device;
         std::unique_ptr<VKCSwapChain> swapChain;
         std::unique_ptr<VKCRenderPass> renderPass;
+        std::vector<std::unique_ptr<VKCShaderModule>> shader_modules;
 
     public:
         VKCManager(std::shared_ptr<WINChisInstance> in_window, uint32_t in_flags);

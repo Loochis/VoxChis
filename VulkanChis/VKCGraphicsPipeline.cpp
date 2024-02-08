@@ -6,7 +6,7 @@
 
 namespace VKChis {
     VKCGraphicsPipeline::VKCGraphicsPipeline(uint32_t flags) {
-        auto vertShaderCode = readFile("shaders/vert.spv");
+        /*auto vertShaderCode = readFile("shaders/vert.spv");
         auto fragShaderCode = readFile("shaders/frag.spv");
 
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
@@ -149,5 +149,6 @@ namespace VKChis {
 
         vkDestroyShaderModule(device, fragShaderModule, nullptr);
         vkDestroyShaderModule(device, vertShaderModule, nullptr);
+         */
     }
 } // VKChis
