@@ -4,27 +4,39 @@
 
 #include "VKCGraphicsPipeline.h"
 
+#include "Utils/ColorMessages.h"
+#include "Utils/VKCEnumerations.h"
+#include <utility>
+
+
 namespace VKChis {
-    VKCGraphicsPipeline::VKCGraphicsPipeline(uint32_t flags) {
-        /*auto vertShaderCode = readFile("shaders/vert.spv");
-        auto fragShaderCode = readFile("shaders/frag.spv");
+    // The monster begins
+    VKCGraphicsPipeline::VKCGraphicsPipeline(uint32_t in_flags, shared_ptr<vector<VKCShaderModule>> &in_shader_modules,
+                                             VkExtent2D in_swapChainExtent, VkDevice in_device, VkRenderPass in_renderPass, VkResult &result)
+            : flags(in_flags),
+              shader_modules(in_shader_modules),
+              swapChainExtent(in_swapChainExtent),
+              device(in_device),
+              renderPass(in_renderPass) {
 
-        VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
-        VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 
-        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        vertShaderStageInfo.module = vertShaderModule;
-        vertShaderStageInfo.pName = "main";
+        VkPipelineShaderStageCreateInfo shaderStages[shader_modules->size()];
+        for (int i = 0; i < shader_modules->size(); i++) {
+            shaderStages[i] = {};
+            shaderStages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 
-        VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-        fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        fragShaderStageInfo.module = fragShaderModule;
-        fragShaderStageInfo.pName = "main";
+            switch ((*shader_modules)[i].shader_type) {
+                case 0:
+                    shaderStages[i].stage = VK_SHADER_STAGE_VERTEX_BIT;
+                    break;
+                case 1:
+                    shaderStages[i].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+                    break;
+            }
 
-        VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+            shaderStages[i].module = (*shader_modules)[i].shaderModule;
+            shaderStages[i].pName = "main";
+        }
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -90,7 +102,9 @@ namespace VKChis {
         multisampling.alphaToOneEnable = VK_FALSE; // Optional
 
         VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-        colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        colorBlendAttachment.colorWriteMask =
+                VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+                VK_COLOR_COMPONENT_A_BIT;
         // THIS BLENDS BASED ON ALPHA newcol*alpha + oldcol*(1-alpha) [ala LERP]
         colorBlendAttachment.blendEnable = VK_TRUE;
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -118,13 +132,15 @@ namespace VKChis {
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout!");
+        result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
+        if (result) {
+            print_colored("/// WARNING /// - Failed to create GFX Pipeline Layout", YELLOW);
+            return;
         }
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.stageCount = 2;
+        pipelineInfo.stageCount = shader_modules->size();
         pipelineInfo.pStages = shaderStages;
 
         pipelineInfo.pVertexInputState = &vertexInputInfo;
@@ -138,17 +154,24 @@ namespace VKChis {
 
         pipelineInfo.layout = pipelineLayout;
 
-        pipelineInfo.renderPass = renderPass;
+        //pipelineInfo.renderPass = renderPass;
+        pipelineInfo.renderPass = renderPass; // TEMP
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.basePipelineIndex = -1; // Optional
 
-        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create graphics pipeline!");
-        }
-
-        vkDestroyShaderModule(device, fragShaderModule, nullptr);
-        vkDestroyShaderModule(device, vertShaderModule, nullptr);
-         */
+        result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
     }
+
+    VKCGraphicsPipeline::~VKCGraphicsPipeline() {
+        bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
+
+        vkDestroyPipeline(device, graphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+
+        if (enableValidation) print_colored("/// CLEAN /// - Destroyed GFX Pipeline", CYAN);
+        if (enableValidation) print_colored("/// CLEAN /// - Destroyed GFX Pipeline Layout", CYAN);
+    }
+    // The monster ends
+
 } // VKChis

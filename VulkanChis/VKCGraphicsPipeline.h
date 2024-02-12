@@ -7,15 +7,30 @@
 
 #include <vulkan/vulkan.h>
 #include <cstdint>
+#include <vector>
+#include <memory>
+
+#include "VKCShaderModule.h"
+
+using namespace std;
 
 namespace VKChis {
 
     class VKCGraphicsPipeline {
     public:
         VkPipelineLayout pipelineLayout;
+        VkPipeline graphicsPipeline;
 
-        explicit VKCGraphicsPipeline(uint32_t flags);
+        explicit VKCGraphicsPipeline(uint32_t flags, shared_ptr<vector<VKCShaderModule>> &in_shader_modules, VkExtent2D in_swapChainExtent, VkDevice in_device, VkRenderPass in_renderPass, VkResult &result);
         ~VKCGraphicsPipeline();
+
+    private:
+        uint32_t flags;
+
+        VkExtent2D swapChainExtent;
+        shared_ptr<vector<VKCShaderModule>> shader_modules;
+        VkDevice device;
+        VkRenderPass renderPass;
     };
 
 } // VKChis

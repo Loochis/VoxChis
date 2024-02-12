@@ -17,6 +17,9 @@ namespace VKChis {
 
     class VKCSwapChain {
     public:
+        // need to expose flags so recreation doesnt spam console
+        uint32_t flags;
+
         VkSwapchainKHR swapChain;
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
@@ -37,7 +40,7 @@ namespace VKChis {
         // Framebuffers
         void createFrameBuffers(VkRenderPass renderPass);
     private:
-        uint32_t flags;
+
 
         VkSurfaceKHR surface;
         VkDevice device;

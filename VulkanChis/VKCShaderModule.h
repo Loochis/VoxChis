@@ -23,6 +23,9 @@ namespace VKChis {
         VKCShaderModule(uint32_t in_flags, string in_file_path, VkDevice in_device, VkResult &result);
         ~VKCShaderModule();
 
+        VkShaderModule shaderModule;
+
+        int shader_type = 0;
         string comp_visname;
 
     private:
@@ -34,7 +37,7 @@ namespace VKChis {
         string dat_path;
 
         VkDevice device;
-        VkShaderModule shaderModule;
+
 
         unsigned char hash[SHA_DIGEST_LENGTH];
 

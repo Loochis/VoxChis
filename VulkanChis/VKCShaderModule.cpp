@@ -34,7 +34,7 @@ namespace VKChis {
 
         comp_visname = comp_name + ".spv";
         comp_path = file_dir + comp_visname;
-        dat_path = file_dir + comp_name + ".spv";
+        dat_path = file_dir + comp_name + ".dat";
 
         // Load shader file
         vector<char> f_contents = readFile(file_path);
@@ -53,8 +53,9 @@ namespace VKChis {
             if (result) return;
 
             // Write metadata
-            ofstream dat_file(file_dir + comp_name + ".dat", std::ofstream::out | std::ofstream::trunc);
+            ofstream dat_file(dat_path, std::ofstream::out | std::ofstream::trunc);
             dat_file << hash;
+            dat_file.close();
         }
 
         auto shaderCode = readFile(comp_path);
@@ -65,7 +66,20 @@ namespace VKChis {
         createInfo.codeSize = shaderCode.size();
         createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
 
+        // Create shader module
         result = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
+
+        // Fill pipeline create info
+        // TODO: Move this functionality to the GFX Pipeline? Research Shader Objects!!
+
+        // use the file extension to determine which type of shader it is ( This might be really bad lol :^] )
+        if (file_ext == "vert")
+            shader_type = 0;
+        else if (file_ext == "frag")
+            shader_type = 1;
+        else {
+            print_colored("/// WARN /// - " + comp_name + ".spv has unknown shader type", YELLOW);
+        }
     }
 
     bool VKCShaderModule::checkDat() {
