@@ -7,7 +7,7 @@
 #include <limits>
 #include <algorithm>
 #include "VKCSwapChain.h"
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/VKCEnumerations.h"
 
 namespace VKChis {
     VKCSwapChain::VKCSwapChain(uint32_t in_flags,

@@ -7,8 +7,8 @@
 
 #include <memory>
 #include <vulkan/vulkan.h>
-#include "Utils/VKCStructs.h"
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/VKCStructs.h"
+#include "../Utils/VKCEnumerations.h"
 
 namespace VKChis {
 

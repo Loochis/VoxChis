@@ -7,7 +7,7 @@
 #include <set>
 #include <stdexcept>
 #include "VKCLogicalDevice.h"
-#include "Utils/ColorMessages.h"
+#include "../Utils/ColorMessages.h"
 
 namespace VKChis {
     VKCLogicalDevice::VKCLogicalDevice(uint32_t in_flags,

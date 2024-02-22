@@ -9,7 +9,7 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 // VKCHIS INCLUDES
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/VKCEnumerations.h"
 #include "VKCValidator.h"
 #include "VKCDebugMessenger.h"
 #include <memory>

@@ -11,6 +11,17 @@
 using namespace std;
 
 namespace VKChis {
+
+    const std::vector<Vertex> vertices = {
+            {{-0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+            {{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+
+            {{-0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    };
+
     VKCManager::VKCManager(std::shared_ptr<WINChisInstance> in_window, uint32_t in_flags)
     : window(std::move(in_window)), flags(in_flags)
     {
@@ -68,6 +79,21 @@ namespace VKChis {
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create GFX Pipeline!");
         if (enableValidation)  print_colored("/// GOOD /// - Created GFX Pipeline", GREEN);
 
+
+        // OBJECT LOADING TESTING
+
+        VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
+        vert_buffer = make_unique<VKCBuffer>(flags, device->device, device->physicalDevice, bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, result);
+
+        void* data;
+        vkMapMemory(device->device, vert_buffer->bufferMemory, 0, bufferSize, 0, &data);
+        memcpy(data, vertices.data(), (size_t) bufferSize);
+        vkUnmapMemory(device->device, vert_buffer->bufferMemory);
+
+        // END TESTING
+
+
         // Create Command Pool
 
         commandManager = make_unique<VKCCommandManager>(flags, device->device, device->indices, MAX_FRAMES_IN_FLIGHT, result);
@@ -88,6 +114,8 @@ namespace VKChis {
         // DONE //
         if (enableValidation) print_colored("\n/// DONE INITIALIZATION ///\n", MAGENTA);
     }
+
+    // TEMP
 
     void VKCManager::DrawFrame() {
         vkWaitForFences(device->device, 1, &(*sync_objects)[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX);
@@ -190,7 +218,14 @@ namespace VKChis {
         scissor.extent = swapChain->swapChainExtent;
         vkCmdSetScissor(commandBufferIn, 0, 1, &scissor);
 
-        vkCmdDraw(commandBufferIn, 3, 1, 0, 0);
+        vkCmdBindPipeline(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->graphicsPipeline);
+
+        VkBuffer vertexBuffers[] = {vert_buffer->buffer};
+        VkDeviceSize offsets[] = {0};
+        vkCmdBindVertexBuffers(commandBufferIn, 0, 1, vertexBuffers, offsets);
+
+        vkCmdDraw(commandBufferIn, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+        //vkCmdDraw(commandBufferIn, 3, 1, 0, 0);
 
         vkCmdEndRenderPass(commandBufferIn);
 

@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <iostream>
 #include "VKCSurface.h"
-#include "Utils/ColorMessages.h"
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/ColorMessages.h"
+#include "../Utils/VKCEnumerations.h"
 
 namespace VKChis {
     VKCSurface::VKCSurface(uint32_t in_flags, VkInstance in_instance, GLFWwindow *window, VkResult &result)

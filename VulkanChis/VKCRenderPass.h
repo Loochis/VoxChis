@@ -7,7 +7,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
-#include "VKCSwapChain.h"
+#include "VKCSubsystem/VKCSwapChain.h"
 
 namespace VKChis {
 

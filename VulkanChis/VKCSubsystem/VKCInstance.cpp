@@ -4,7 +4,7 @@
 
 #include "VKCInstance.h"
 #include <stdexcept>
-#include "Utils/ColorMessages.h"
+#include "../Utils/ColorMessages.h"
 
 namespace VKChis {
 

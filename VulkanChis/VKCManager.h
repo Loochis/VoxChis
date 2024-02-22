@@ -9,15 +9,16 @@
 #include <memory>
 #include "Utils/VKCEnumerations.h"
 #include "WINChisInstance.h"
-#include "VKCInstance.h"
-#include "VKCSurface.h"
-#include "VKCLogicalDevice.h"
-#include "VKCSwapChain.h"
+#include "VKCSubsystem/VKCInstance.h"
+#include "VKCSubsystem/VKCSurface.h"
+#include "VKCSubsystem/VKCLogicalDevice.h"
+#include "VKCSubsystem/VKCSwapChain.h"
 #include "VKCRenderPass.h"
 #include "VKCShaderModule.h"
 #include "VKCGraphicsPipeline.h"
 #include "VKCCommandManager.h"
 #include "VKCSyncObjects.h"
+#include "VKCBuffer.h"
 
 using namespace std;
 
@@ -50,6 +51,8 @@ namespace VKChis {
 
         unique_ptr<VKCCommandManager> commandManager;
         shared_ptr<vector<VKCSyncObjects>> sync_objects;
+
+        unique_ptr<VKCBuffer> vert_buffer;
 
         int currentFrame = 0;
 

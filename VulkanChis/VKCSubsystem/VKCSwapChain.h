@@ -5,8 +5,8 @@
 #ifndef VOXCHIS_VKCSWAPCHAIN_H
 #define VOXCHIS_VKCSWAPCHAIN_H
 
-#include "Utils/VKCStructs.h"
-#include "Utils/ColorMessages.h"
+#include "../Utils/VKCStructs.h"
+#include "../Utils/ColorMessages.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <GLFW/glfw3.h>
