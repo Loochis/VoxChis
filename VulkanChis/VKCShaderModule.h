@@ -13,6 +13,8 @@
 #include <utility>
 #include <fstream>
 #include <openssl/sha.h>
+#include <memory>
+#include "VKCSubsystem/VKCDevice.h"
 
 using namespace std;
 
@@ -20,7 +22,7 @@ namespace VKChis {
 
     class VKCShaderModule {
     public:
-        VKCShaderModule(uint32_t in_flags, string in_file_path, VkDevice in_device, VkResult &result);
+        VKCShaderModule(uint32_t in_flags, string in_file_path, shared_ptr<VKCDevice> &in_device, VkResult &result);
         ~VKCShaderModule();
 
         VkShaderModule shaderModule;
@@ -36,7 +38,7 @@ namespace VKChis {
         string comp_name;
         string dat_path;
 
-        VkDevice device;
+        shared_ptr<VKCDevice> device;
 
 
         unsigned char hash[SHA_DIGEST_LENGTH];

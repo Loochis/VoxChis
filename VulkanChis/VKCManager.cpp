@@ -40,17 +40,17 @@ namespace VKChis {
         if (enableValidation)  print_colored("/// GOOD /// - Created VKSurfaceKHR", GREEN);
 
         // Create Logical Device
-        device = std::make_unique<VKCLogicalDevice>(flags, validationLayers, deviceExtensions, instance->instance, surface->surface, result);
+        device = std::make_shared<VKCDevice>(flags, validationLayers, deviceExtensions, instance->instance, surface->surface, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Logical Device!");
         if (enableValidation)  print_colored("/// GOOD /// - Created Logical Device", GREEN);
 
         // Create Swap Chain
-        swapChain = std::make_unique<VKCSwapChain>(flags, surface->surface, device->device, window->window, device->indices, device->swapChainSupport, result);
+        swapChain = std::make_unique<VKCSwapChain>(flags, surface->surface, device, window->window, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create SwapChain!");
         if (enableValidation)  print_colored("/// GOOD /// - Created SwapChain", GREEN);
 
         // Create Render Pass
-        renderPass = std::make_unique<VKCRenderPass>(flags, device->device, swapChain->swapChainImageFormat, result);
+        renderPass = std::make_unique<VKCRenderPass>(flags, device, swapChain->swapChainImageFormat, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Render Pass!");
         if (enableValidation)  print_colored("/// GOOD /// - Created Render Pass", GREEN);
 
@@ -67,7 +67,7 @@ namespace VKChis {
 
         for (int i = 0; i < shader_loadstrs.size(); i++) {
             string shader_path = shader_dir + shader_loadstrs[i];
-            shader_modules->emplace_back(flags, shader_path, device->device, result);
+            shader_modules->emplace_back(flags, shader_path, device, result);
             if (enableValidation) {
                 if (result) print_colored("/// WARN /// - Could not load shader " + (*shader_modules)[i].comp_visname, YELLOW);
                 else print_colored("/// INFO /// - Loaded " + (*shader_modules)[i].comp_visname, WHITE);
@@ -75,37 +75,44 @@ namespace VKChis {
         }
 
 
-        graphicsPipeline = make_unique<VKCGraphicsPipeline>(flags, shader_modules, swapChain->swapChainExtent, device->device, renderPass->renderPass, result);
+        graphicsPipeline = make_unique<VKCGraphicsPipeline>(flags, shader_modules, swapChain->swapChainExtent, device, renderPass->renderPass, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create GFX Pipeline!");
         if (enableValidation)  print_colored("/// GOOD /// - Created GFX Pipeline", GREEN);
 
-
-        // OBJECT LOADING TESTING
-
-        VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
-        vert_buffer = make_unique<VKCBuffer>(flags, device->device, device->physicalDevice, bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, result);
-
-        void* data;
-        vkMapMemory(device->device, vert_buffer->bufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, vertices.data(), (size_t) bufferSize);
-        vkUnmapMemory(device->device, vert_buffer->bufferMemory);
-
-        // END TESTING
-
-
         // Create Command Pool
 
-        commandManager = make_unique<VKCCommandManager>(flags, device->device, device->indices, MAX_FRAMES_IN_FLIGHT, result);
+        commandManager = make_unique<VKCCommandManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Command Manager!");
         if (enableValidation)  print_colored("/// GOOD /// - Created Command Manager", GREEN);
+
+        // VERTEX BUFFER
+
+        VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
+
+        unique_ptr<VKCBuffer> stage_buffer = make_unique<VKCBuffer>(flags, device, bufferSize,
+                                           VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, result);
+
+        void* data;
+        vkMapMemory(device->device, stage_buffer->bufferMemory, 0, bufferSize, 0, &data);
+        memcpy(data, vertices.data(), (size_t) bufferSize);
+        vkUnmapMemory(device->device, stage_buffer->bufferMemory);
+
+        vert_buffer = make_unique<VKCBuffer>(flags, device, bufferSize,
+                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, result);
+
+        // copy buf
+        commandManager->CMD_CopyBuffer(stage_buffer->buffer, vert_buffer->buffer, bufferSize);
+
+        // END VERTEX BUFFER
 
         // Create Sync Objects
 
         sync_objects = make_shared<vector<VKCSyncObjects>>();
         sync_objects->reserve(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            sync_objects->emplace_back(flags, device->device, result);
+            sync_objects->emplace_back(flags, device, result);
             if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Sync Object ( " + to_string(i) + ")!");
         }
 
@@ -246,7 +253,7 @@ namespace VKChis {
         swapChain.reset();
         VkResult result;
 
-        swapChain = std::make_unique<VKCSwapChain>(t_flags, surface->surface, device->device, window->window, device->indices, device->swapChainSupport, result);
+        swapChain = std::make_unique<VKCSwapChain>(t_flags, surface->surface, device, window->window, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to recreate SwapChain!");
 
         // Recreate framebuffer

@@ -12,17 +12,15 @@
 namespace VKChis {
     VKCSwapChain::VKCSwapChain(uint32_t in_flags,
                                VkSurfaceKHR in_surface,
-                               VkDevice in_device,
+                               shared_ptr<VKCDevice> &in_device,
                                GLFWwindow *in_window,
-                               QueueFamilyIndices &in_indices,
-                               SwapChainSupportDetails &in_swapChainSupport,
                                VkResult &result)
     :   flags(in_flags),
         surface(in_surface),
         device(in_device),
         window(in_window),
-        indices(in_indices),
-        swapChainSupport(in_swapChainSupport)
+        indices(device->indices),
+        swapChainSupport(device->swapChainSupport)
     {
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
@@ -67,12 +65,12 @@ namespace VKChis {
         createInfo.oldSwapchain = VK_NULL_HANDLE;
 
         // create the swap chain
-        result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
+        result = vkCreateSwapchainKHR(device->device, &createInfo, nullptr, &swapChain);
         if (result) return; // Swap chain creation failure
 
-        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(device->device, swapChain, &imageCount, nullptr);
         swapChainImages.resize(imageCount);
-        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+        vkGetSwapchainImagesKHR(device->device, swapChain, &imageCount, swapChainImages.data());
 
         swapChainImageFormat = surfaceFormat.format;
         swapChainExtent = extent;
@@ -142,7 +140,7 @@ namespace VKChis {
             createInfo.subresourceRange.baseArrayLayer = 0;
             createInfo.subresourceRange.layerCount = 1;
 
-            if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
+            if (vkCreateImageView(device->device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
                 throw std::runtime_error("/// FATAL ERROR /// Failed to create Image Views!");
             }
         }
@@ -172,7 +170,7 @@ namespace VKChis {
             framebufferInfo.height = swapChainExtent.height;
             framebufferInfo.layers = 1;
 
-            if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+            if (vkCreateFramebuffer(device->device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
                 throw std::runtime_error("/// FATAL ERROR /// Failed to create framebuffer!");
             }
         }
@@ -193,7 +191,7 @@ namespace VKChis {
         msg += ")";
 
         for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
-            vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
+            vkDestroyFramebuffer(device->device, swapChainFramebuffers[i], nullptr);
         }
         if (enableValidation) print_colored(msg, WHITE);
 
@@ -202,11 +200,11 @@ namespace VKChis {
         msg += ")";
 
         for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-            vkDestroyImageView(device, swapChainImageViews[i], nullptr);
+            vkDestroyImageView(device->device, swapChainImageViews[i], nullptr);
         }
         if (enableValidation) print_colored(msg, WHITE);
 
-        vkDestroySwapchainKHR(device, swapChain, nullptr);
+        vkDestroySwapchainKHR(device->device, swapChain, nullptr);
         if (enableValidation) print_colored("/// CLEAN /// - Destroyed SwapChain", CYAN);
     }
 

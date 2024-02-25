@@ -6,6 +6,9 @@
 #define VOXCHIS_VKCBUFFER_H
 
 #include <vulkan/vulkan.h>
+#include "VKCSubsystem/VKCDevice.h"
+
+using namespace std;
 
 namespace VKChis {
 
@@ -15,8 +18,7 @@ namespace VKChis {
         VkDeviceMemory bufferMemory;
 
         VKCBuffer(uint32_t in_flags,
-                  VkDevice in_device,
-                  VkPhysicalDevice in_physDevice,
+                  shared_ptr<VKCDevice> &in_device,
                   VkDeviceSize size,
                   VkBufferUsageFlags usage,
                   VkMemoryPropertyFlags properties,
@@ -25,8 +27,7 @@ namespace VKChis {
         ~VKCBuffer();
     private:
         uint32_t flags;
-        VkDevice device;
-        VkPhysicalDevice physDevice;
+        shared_ptr<VKCDevice> device;
 
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     };

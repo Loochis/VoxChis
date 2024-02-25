@@ -8,7 +8,7 @@
 #include "Utils/ColorMessages.h"
 
 namespace VKChis {
-    VKCShaderModule::VKCShaderModule(uint32_t in_flags, string in_file_path, VkDevice in_device, VkResult &result)
+    VKCShaderModule::VKCShaderModule(uint32_t in_flags, string in_file_path, shared_ptr<VKCDevice> &in_device, VkResult &result)
     : flags(in_flags),
       file_path(std::move(in_file_path)),
       device(in_device)
@@ -67,7 +67,7 @@ namespace VKChis {
         createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
 
         // Create shader module
-        result = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
+        result = vkCreateShaderModule(device->device, &createInfo, nullptr, &shaderModule);
 
         // Fill pipeline create info
         // TODO: Move this functionality to the GFX Pipeline? Research Shader Objects!!
@@ -131,7 +131,7 @@ namespace VKChis {
     VKCShaderModule::~VKCShaderModule() {
         bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
-        vkDestroyShaderModule(device, shaderModule, nullptr);
+        vkDestroyShaderModule(device->device, shaderModule, nullptr);
         if (enableValidation) print_colored("/// CLEAN /// - Unloaded " + comp_visname, WHITE);
     }
 } // VKChis

@@ -13,7 +13,7 @@
 namespace VKChis {
     // The monster begins
     VKCGraphicsPipeline::VKCGraphicsPipeline(uint32_t in_flags, shared_ptr<vector<VKCShaderModule>> &in_shader_modules,
-                                             VkExtent2D in_swapChainExtent, VkDevice in_device, VkRenderPass in_renderPass, VkResult &result)
+                                             VkExtent2D in_swapChainExtent, shared_ptr<VKCDevice> &in_device, VkRenderPass in_renderPass, VkResult &result)
             : flags(in_flags),
               shader_modules(in_shader_modules),
               swapChainExtent(in_swapChainExtent),
@@ -141,7 +141,7 @@ namespace VKChis {
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-        result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
+        result = vkCreatePipelineLayout(device->device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
         if (result) {
             print_colored("/// WARNING /// - Failed to create GFX Pipeline Layout", YELLOW);
             return;
@@ -169,14 +169,14 @@ namespace VKChis {
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.basePipelineIndex = -1; // Optional
 
-        result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
+        result = vkCreateGraphicsPipelines(device->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
     }
 
     VKCGraphicsPipeline::~VKCGraphicsPipeline() {
         bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
-        vkDestroyPipeline(device, graphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        vkDestroyPipeline(device->device, graphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(device->device, pipelineLayout, nullptr);
 
         if (enableValidation) print_colored("/// CLEAN /// - Destroyed GFX Pipeline", CYAN);
         if (enableValidation) print_colored("/// CLEAN /// - Destroyed GFX Pipeline Layout", CYAN);

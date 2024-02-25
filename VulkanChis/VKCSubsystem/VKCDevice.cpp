@@ -6,15 +6,15 @@
 #include <vector>
 #include <set>
 #include <stdexcept>
-#include "VKCLogicalDevice.h"
+#include "VKCDevice.h"
 #include "../Utils/ColorMessages.h"
 
 namespace VKChis {
-    VKCLogicalDevice::VKCLogicalDevice(uint32_t in_flags,
-                                       std::vector<const char*> in_validationLayers,
-                                       std::vector<const char*> in_deviceExtensions,
-                                       VkInstance in_instance, VkSurfaceKHR in_surface,
-                                       VkResult &result)
+    VKCDevice::VKCDevice(uint32_t in_flags,
+                         std::vector<const char*> in_validationLayers,
+                         std::vector<const char*> in_deviceExtensions,
+                         VkInstance in_instance, VkSurfaceKHR in_surface,
+                         VkResult &result)
     :   flags(in_flags),
         validationLayers(std::move(in_validationLayers)),
         deviceExtensions(std::move(in_deviceExtensions)),
@@ -101,7 +101,7 @@ namespace VKChis {
         vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
     }
 
-    void VKCLogicalDevice::PickPhysicalDevice(VkResult &result) {
+    void VKCDevice::PickPhysicalDevice(VkResult &result) {
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
@@ -125,7 +125,7 @@ namespace VKChis {
             result = VK_ERROR_DEVICE_LOST;
     }
 
-    bool VKCLogicalDevice::isDeviceSuitable(VkPhysicalDevice ck_physDevice) {
+    bool VKCDevice::isDeviceSuitable(VkPhysicalDevice ck_physDevice) {
         QueueFamilyIndices ck_indices = findQueueFamilies(ck_physDevice);
 
         bool extensionsSupported = checkDeviceExtensionSupport(ck_physDevice);
@@ -139,7 +139,7 @@ namespace VKChis {
         return ck_indices.isComplete() && extensionsSupported && swapChainAdequate;
     }
 
-    QueueFamilyIndices VKCLogicalDevice::findQueueFamilies(VkPhysicalDevice ck_device) {
+    QueueFamilyIndices VKCDevice::findQueueFamilies(VkPhysicalDevice ck_device) {
         QueueFamilyIndices ck_indices;
 
         uint32_t queueFamilyCount = 0;
@@ -171,7 +171,7 @@ namespace VKChis {
         return ck_indices;
     }
 
-    bool VKCLogicalDevice::checkDeviceExtensionSupport(VkPhysicalDevice ck_device) {
+    bool VKCDevice::checkDeviceExtensionSupport(VkPhysicalDevice ck_device) {
         uint32_t extensionCount;
         vkEnumerateDeviceExtensionProperties(ck_device, nullptr, &extensionCount, nullptr);
 
@@ -187,7 +187,7 @@ namespace VKChis {
         return requiredExtensions.empty();
     }
 
-    SwapChainSupportDetails VKCLogicalDevice::querySwapChainSupport(VkPhysicalDevice ck_device) {
+    SwapChainSupportDetails VKCDevice::querySwapChainSupport(VkPhysicalDevice ck_device) {
         SwapChainSupportDetails details;
 
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ck_device, surface, &details.capabilities);
@@ -211,7 +211,7 @@ namespace VKChis {
         return details;
     }
 
-    VKCLogicalDevice::~VKCLogicalDevice() {
+    VKCDevice::~VKCDevice() {
         bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
         vkDestroyDevice(device, nullptr);

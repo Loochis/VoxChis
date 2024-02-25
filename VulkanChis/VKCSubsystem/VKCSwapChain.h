@@ -7,11 +7,15 @@
 
 #include "../Utils/VKCStructs.h"
 #include "../Utils/ColorMessages.h"
+#include "VKCDevice.h"
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <memory>
 #include <GLFW/glfw3.h>
 
 namespace VKChis {
+
+    using namespace std;
 
     // VKC SWAPCHAIN IS ALSO RESPONSIBLE FOR IT'S OWN IMAGE VIEWS
 
@@ -29,10 +33,8 @@ namespace VKChis {
 
         VKCSwapChain(uint32_t in_flags,
                      VkSurfaceKHR in_surface,
-                     VkDevice in_device,
+                     shared_ptr<VKCDevice> &in_device,
                      GLFWwindow *in_window,
-                     QueueFamilyIndices &in_indices,
-                     SwapChainSupportDetails &in_swapChainSupport,
                      VkResult &result);
 
         ~VKCSwapChain();
@@ -43,7 +45,7 @@ namespace VKChis {
 
 
         VkSurfaceKHR surface;
-        VkDevice device;
+        shared_ptr<VKCDevice> device;
         GLFWwindow *window;
 
         QueueFamilyIndices indices;

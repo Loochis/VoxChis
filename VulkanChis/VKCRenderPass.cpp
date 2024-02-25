@@ -8,7 +8,7 @@
 #include "Utils/VKCEnumerations.h"
 
 namespace VKChis {
-    VKCRenderPass::VKCRenderPass(uint32_t in_flags, VkDevice in_device, VkFormat in_swapChainImageFormat, VkResult &result)
+    VKCRenderPass::VKCRenderPass(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, VkFormat in_swapChainImageFormat, VkResult &result)
     :   flags(in_flags),
         device(in_device),
         swapChainImageFormat(in_swapChainImageFormat)
@@ -54,13 +54,13 @@ namespace VKChis {
         renderPassInfo.pDependencies = &dependency;
 
 
-        result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass);
+        result = vkCreateRenderPass(device->device, &renderPassInfo, nullptr, &renderPass);
     }
 
     VKCRenderPass::~VKCRenderPass() {
         bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
-        vkDestroyRenderPass(device, renderPass, nullptr);
+        vkDestroyRenderPass(device->device, renderPass, nullptr);
         if (enableValidation) print_colored("/// CLEAN /// - Destroyed Render Pass", CYAN);
     }
 } // VKChis

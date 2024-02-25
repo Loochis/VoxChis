@@ -2,8 +2,8 @@
 // Created by loochis on 2/3/24.
 //
 
-#ifndef VOXCHIS_VKCLOGICALDEVICE_H
-#define VOXCHIS_VKCLOGICALDEVICE_H
+#ifndef VOXCHIS_VKCDEVICE_H
+#define VOXCHIS_VKCDEVICE_H
 
 #include <memory>
 #include <vulkan/vulkan.h>
@@ -12,7 +12,7 @@
 
 namespace VKChis {
 
-    class VKCLogicalDevice {
+    class VKCDevice {
     public:
         VkPhysicalDevice physicalDevice;
         VkDevice device;
@@ -23,13 +23,13 @@ namespace VKChis {
         VkQueue graphicsQueue;
         VkQueue presentQueue;
 
-        explicit VKCLogicalDevice(uint32_t in_flags,
-                                  std::vector<const char*> in_validationLayers,
-                                  std::vector<const char*> in_deviceExtensions,
-                                  VkInstance in_instance,
-                                  VkSurfaceKHR in_surface,
-                                  VkResult &result);
-        ~VKCLogicalDevice();
+        explicit VKCDevice(uint32_t in_flags,
+                           std::vector<const char*> in_validationLayers,
+                           std::vector<const char*> in_deviceExtensions,
+                           VkInstance in_instance,
+                           VkSurfaceKHR in_surface,
+                           VkResult &result);
+        ~VKCDevice();
     private:
         uint32_t flags;
 
@@ -48,4 +48,4 @@ namespace VKChis {
 
 } // VKChis
 
-#endif //VOXCHIS_VKCLOGICALDEVICE_H
+#endif //VOXCHIS_VKCDEVICE_H

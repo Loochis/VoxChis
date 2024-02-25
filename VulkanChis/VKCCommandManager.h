@@ -10,6 +10,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 #include "Utils/VKCStructs.h"
+#include "VKCSubsystem/VKCDevice.h"
 
 using namespace std;
 
@@ -20,14 +21,16 @@ namespace VKChis {
         VkCommandPool commandPool;
         vector<VkCommandBuffer> commandBuffers;
 
-        VKCCommandManager(uint32_t in_flags, VkDevice in_device, QueueFamilyIndices &in_indices, int in_MAX_FRAMES_IN_FLIGHT, VkResult &result);
+        void CMD_CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+        VKCCommandManager(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, int in_MAX_FRAMES_IN_FLIGHT, VkResult &result);
         ~VKCCommandManager();
     private:
         uint32_t flags;
 
         int MAX_FRAMES_IN_FLIGHT;
 
-        VkDevice device;
+        shared_ptr<VKCDevice> device;
         QueueFamilyIndices indices;
     };
 

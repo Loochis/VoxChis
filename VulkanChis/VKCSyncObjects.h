@@ -7,6 +7,9 @@
 
 #include <cstdint>
 #include <vulkan/vulkan.h>
+#include "VKCSubsystem/VKCDevice.h"
+
+using namespace std;
 
 namespace VKChis {
 
@@ -16,12 +19,12 @@ namespace VKChis {
         VkSemaphore imageAvailableSemaphore;
         VkFence inFlightFence;
 
-        VKCSyncObjects(uint32_t in_flags, VkDevice in_device, VkResult &result);
+        VKCSyncObjects(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, VkResult &result);
         ~VKCSyncObjects();
     private:
         uint32_t flags;
 
-        VkDevice device;
+        shared_ptr<VKCDevice> device;
     };
 
 } // VKChis

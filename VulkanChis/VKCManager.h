@@ -11,7 +11,7 @@
 #include "WINChisInstance.h"
 #include "VKCSubsystem/VKCInstance.h"
 #include "VKCSubsystem/VKCSurface.h"
-#include "VKCSubsystem/VKCLogicalDevice.h"
+#include "VKCSubsystem/VKCDevice.h"
 #include "VKCSubsystem/VKCSwapChain.h"
 #include "VKCRenderPass.h"
 #include "VKCShaderModule.h"
@@ -42,7 +42,7 @@ namespace VKChis {
         shared_ptr<WINChisInstance> window;
         unique_ptr<VKCInstance> instance;
         unique_ptr<VKCSurface> surface;
-        unique_ptr<VKCLogicalDevice> device;
+        shared_ptr<VKCDevice> device; // SHARED
         unique_ptr<VKCSwapChain> swapChain;
         unique_ptr<VKCRenderPass> renderPass;
 

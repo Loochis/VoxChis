@@ -7,20 +7,24 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <memory>
 #include "VKCSubsystem/VKCSwapChain.h"
+#include "VKCSubsystem/VKCDevice.h"
 
 namespace VKChis {
+
+    using namespace std;
 
     class VKCRenderPass {
     public:
         VkRenderPass renderPass;
 
-        VKCRenderPass(uint32_t in_flags, VkDevice in_device, VkFormat in_swapChainImageFormat, VkResult &result);
+        VKCRenderPass(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, VkFormat in_swapChainImageFormat, VkResult &result);
         ~VKCRenderPass();
     private:
         uint32_t flags;
 
-        VkDevice device;
+        shared_ptr<VKCDevice> device;
         VkFormat swapChainImageFormat;
     };
 
