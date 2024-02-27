@@ -53,6 +53,7 @@ namespace VKChis {
         shared_ptr<vector<VKCSyncObjects>> sync_objects;
 
         unique_ptr<VKCBuffer> vert_buffer;
+        unique_ptr<VKCBuffer> ind_buffer;
 
         int currentFrame = 0;
 

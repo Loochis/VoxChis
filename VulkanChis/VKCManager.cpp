@@ -13,13 +13,14 @@ using namespace std;
 namespace VKChis {
 
     const std::vector<Vertex> vertices = {
-            {{-0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
             {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-            {{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    };
 
-            {{-0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    const std::vector<uint16_t> indices = {
+            0, 1, 2, 2, 3, 0
     };
 
     VKCManager::VKCManager(std::shared_ptr<WINChisInstance> in_window, uint32_t in_flags)
@@ -106,6 +107,29 @@ namespace VKChis {
         commandManager->CMD_CopyBuffer(stage_buffer->buffer, vert_buffer->buffer, bufferSize);
 
         // END VERTEX BUFFER
+
+        // INDEX BUFFER
+
+        stage_buffer.reset();
+        bufferSize = sizeof(indices[0]) * indices.size();
+
+        stage_buffer = make_unique<VKCBuffer>(flags, device, bufferSize,
+                                                                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, result);
+
+        vkMapMemory(device->device, stage_buffer->bufferMemory, 0, bufferSize, 0, &data);
+        memcpy(data, indices.data(), (size_t) bufferSize);
+        vkUnmapMemory(device->device, stage_buffer->bufferMemory);
+
+        ind_buffer = make_unique<VKCBuffer>(flags, device, bufferSize,
+                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, result);
+
+        // copy buf
+        commandManager->CMD_CopyBuffer(stage_buffer->buffer, ind_buffer->buffer, bufferSize);
+
+        // END INDEX BUFFER
+
 
         // Create Sync Objects
 
@@ -231,8 +255,10 @@ namespace VKChis {
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBufferIn, 0, 1, vertexBuffers, offsets);
 
-        vkCmdDraw(commandBufferIn, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
-        //vkCmdDraw(commandBufferIn, 3, 1, 0, 0);
+        // INDICES
+        vkCmdBindIndexBuffer(commandBufferIn, ind_buffer->buffer, 0, VK_INDEX_TYPE_UINT16);
+
+        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
         vkCmdEndRenderPass(commandBufferIn);
 
