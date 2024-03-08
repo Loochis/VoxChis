@@ -1,5 +1,6 @@
-file(GLOB DYNAMIC_FILES *.cpp)
 file(GLOB SUBSYS_FILES VKCSubsystem/*.cpp)
+file(GLOB DYNAMIC_FILES VKCDynamicComponents/*.cpp)
+file(GLOB ABSTRACT_FILES VKCAbstractions/*.cpp)
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 3.3 REQUIRED)

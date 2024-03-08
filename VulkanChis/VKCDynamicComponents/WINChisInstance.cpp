@@ -5,8 +5,8 @@
 #include <stdexcept>
 #include <iostream>
 #include "WINChisInstance.h"
-#include "Utils/ColorMessages.h"
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/ColorMessages.h"
+#include "../Utils/VKCEnumerations.h"
 
 namespace VKChis {
     WINChisInstance::WINChisInstance(uint32_t in_flags, int width, int height, const std::string& title)

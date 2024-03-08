@@ -6,7 +6,7 @@
 #define VOXCHIS_VKCBUFFER_H
 
 #include <vulkan/vulkan.h>
-#include "VKCSubsystem/VKCDevice.h"
+#include "../VKCSubsystem/VKCDevice.h"
 
 using namespace std;
 

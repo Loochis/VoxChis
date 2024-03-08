@@ -14,7 +14,7 @@
 #include <fstream>
 #include <openssl/sha.h>
 #include <memory>
-#include "VKCSubsystem/VKCDevice.h"
+#include "../VKCSubsystem/VKCDevice.h"
 
 using namespace std;
 

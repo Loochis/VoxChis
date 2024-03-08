@@ -3,8 +3,8 @@
 //
 
 #include "VKCSyncObjects.h"
-#include "Utils/ColorMessages.h"
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/ColorMessages.h"
+#include "../Utils/VKCEnumerations.h"
 
 namespace VKChis {
     VKCSyncObjects::VKCSyncObjects(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, VkResult &result)

@@ -12,4 +12,9 @@ enum vkc_InitFlags : uint32_t {
         VKC_DISPLAY_GPU_INFO        = 1 << 1
 };
 
+enum vkc_Result : uint32_t {
+    VKC_SUCCESS                     = 1 << 0,
+    VKC_ALLOCATION_FAILURE          = 1 << 1
+};
+
 #endif //VOXCHIS_VKCENUMERATIONS_H

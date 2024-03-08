@@ -4,8 +4,8 @@
 
 
 #include "VKCRenderPass.h"
-#include "Utils/ColorMessages.h"
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/ColorMessages.h"
+#include "../Utils/VKCEnumerations.h"
 
 namespace VKChis {
     VKCRenderPass::VKCRenderPass(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, VkFormat in_swapChainImageFormat, VkResult &result)

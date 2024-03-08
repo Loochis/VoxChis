@@ -3,8 +3,8 @@
 //
 
 #include "VKCCommandManager.h"
-#include "Utils/ColorMessages.h"
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/ColorMessages.h"
+#include "../Utils/VKCEnumerations.h"
 
 namespace VKChis {
     VKCCommandManager::VKCCommandManager(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, int in_MAX_FRAMES_IN_FLIGHT, VkResult &result)

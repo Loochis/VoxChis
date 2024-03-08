@@ -4,8 +4,8 @@
 
 
 #include "VKCShaderModule.h"
-#include "Utils/VKCEnumerations.h"
-#include "Utils/ColorMessages.h"
+#include "../Utils/VKCEnumerations.h"
+#include "../Utils/ColorMessages.h"
 
 namespace VKChis {
     VKCShaderModule::VKCShaderModule(uint32_t in_flags, string in_file_path, shared_ptr<VKCDevice> &in_device, VkResult &result)

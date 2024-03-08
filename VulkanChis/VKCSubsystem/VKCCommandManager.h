@@ -9,8 +9,8 @@
 #include <cstdint>
 #include <vector>
 #include <vulkan/vulkan.h>
-#include "Utils/VKCStructs.h"
-#include "VKCSubsystem/VKCDevice.h"
+#include "../Utils/VKCStructs.h"
+#include "VKCDevice.h"
 
 using namespace std;
 

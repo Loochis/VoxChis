@@ -2,8 +2,8 @@
 // Created by loochis on 2/16/24.
 //
 
-#include "Utils/ColorMessages.h"
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/ColorMessages.h"
+#include "../Utils/VKCEnumerations.h"
 #include "VKCBuffer.h"
 
 namespace VKChis {

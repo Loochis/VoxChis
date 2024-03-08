@@ -7,18 +7,23 @@
 
 // VKChis includes
 #include <memory>
-#include "Utils/VKCEnumerations.h"
+#include "../Utils/VKCEnumerations.h"
 #include "WINChisInstance.h"
-#include "VKCSubsystem/VKCInstance.h"
-#include "VKCSubsystem/VKCSurface.h"
-#include "VKCSubsystem/VKCDevice.h"
-#include "VKCSubsystem/VKCSwapChain.h"
+#include "../VKCSubsystem/VKCInstance.h"
+#include "../VKCSubsystem/VKCSurface.h"
+#include "../VKCSubsystem/VKCDevice.h"
+#include "../VKCSubsystem/VKCSwapChain.h"
 #include "VKCRenderPass.h"
 #include "VKCShaderModule.h"
 #include "VKCGraphicsPipeline.h"
-#include "VKCCommandManager.h"
+#include "../VKCSubsystem/VKCCommandManager.h"
 #include "VKCSyncObjects.h"
 #include "VKCBuffer.h"
+#include "../VKCSubsystem/VKCDescriptorManager.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <chrono>
 
 using namespace std;
 
@@ -46,6 +51,9 @@ namespace VKChis {
         unique_ptr<VKCSwapChain> swapChain;
         unique_ptr<VKCRenderPass> renderPass;
 
+        shared_ptr<VKCDescriptorSetLayout> descriptorSetLayout;
+        unique_ptr<VKCDescriptorManager> descriptorManager;
+
         shared_ptr<vector<VKCShaderModule>> shader_modules;
         unique_ptr<VKCGraphicsPipeline> graphicsPipeline;
 
@@ -65,6 +73,7 @@ namespace VKChis {
 
         // Ohh boy this is where it gets complicated
         void DrawFrame();
+        void updateUniformBuffer(uint32_t currentImage);
     };
 
 } // VKChis

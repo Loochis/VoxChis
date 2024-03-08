@@ -4,20 +4,22 @@
 
 #include "VKCGraphicsPipeline.h"
 
-#include "Utils/ColorMessages.h"
-#include "Utils/VKCEnumerations.h"
-#include "Utils/VKCStructs.h"
+#include "../Utils/ColorMessages.h"
+#include "../Utils/VKCEnumerations.h"
+#include "../Utils/VKCStructs.h"
 #include <utility>
 
 
 namespace VKChis {
     // The monster begins
     VKCGraphicsPipeline::VKCGraphicsPipeline(uint32_t in_flags, shared_ptr<vector<VKCShaderModule>> &in_shader_modules,
-                                             VkExtent2D in_swapChainExtent, shared_ptr<VKCDevice> &in_device, VkRenderPass in_renderPass, VkResult &result)
+                                             VkExtent2D in_swapChainExtent, shared_ptr<VKCDevice> &in_device,
+                                             shared_ptr<VKCDescriptorSetLayout> &in_descSetLayout, VkRenderPass in_renderPass, VkResult &result)
             : flags(in_flags),
               shader_modules(in_shader_modules),
               swapChainExtent(in_swapChainExtent),
               device(in_device),
+              descSetLayout(in_descSetLayout),
               renderPass(in_renderPass) {
 
 
@@ -93,8 +95,12 @@ namespace VKChis {
         rasterizer.rasterizerDiscardEnable = VK_FALSE;
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizer.lineWidth = 1.0f;
+        //rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+        //rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+
+        // TODO: Use standard way of flipping Y coordinate instead of matrix fiddling
         rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
         rasterizer.depthBiasEnable = VK_FALSE;
         rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -136,8 +142,8 @@ namespace VKChis {
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 0; // Optional
-        pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+        pipelineLayoutInfo.setLayoutCount = 1;
+        pipelineLayoutInfo.pSetLayouts = &(descSetLayout->descriptorSetLayout);
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 

@@ -3,7 +3,7 @@
 //
 
 #include "VKCManager.h"
-#include "Utils/ColorMessages.h"
+#include "../Utils/ColorMessages.h"
 
 #include <memory>
 #include <utility>
@@ -20,7 +20,8 @@ namespace VKChis {
     };
 
     const std::vector<uint16_t> indices = {
-            0, 1, 2, 2, 3, 0
+            0, 1, 2, 2, 3, 0,
+            0, 1, 3, 1, 2, 3
     };
 
     VKCManager::VKCManager(std::shared_ptr<WINChisInstance> in_window, uint32_t in_flags)
@@ -58,6 +59,15 @@ namespace VKChis {
         // Create Framebuffer
         swapChain->createFrameBuffers(renderPass->renderPass);
 
+        // Create UBO resources
+        descriptorSetLayout = make_shared<VKCDescriptorSetLayout>(flags, device, result);
+        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Descriptor Set Layout!");
+        if (enableValidation)  print_colored("/// GOOD /// - Created Descriptor Set Layout", GREEN);
+
+        descriptorManager = make_unique<VKCDescriptorManager>(flags, device, descriptorSetLayout, MAX_FRAMES_IN_FLIGHT, result);
+        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Descriptor Pool/Set!");
+        if (enableValidation)  print_colored("/// GOOD /// - Created Descriptor Pool and Set", GREEN);
+
         // Create GFX Pipeline
 
         string shader_dir = "/home/loochis/CLionProjects/VoxChis/Shaders/";
@@ -75,8 +85,7 @@ namespace VKChis {
             }
         }
 
-
-        graphicsPipeline = make_unique<VKCGraphicsPipeline>(flags, shader_modules, swapChain->swapChainExtent, device, renderPass->renderPass, result);
+        graphicsPipeline = make_unique<VKCGraphicsPipeline>(flags, shader_modules, swapChain->swapChainExtent, device, descriptorSetLayout, renderPass->renderPass, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create GFX Pipeline!");
         if (enableValidation)  print_colored("/// GOOD /// - Created GFX Pipeline", GREEN);
 
@@ -130,6 +139,9 @@ namespace VKChis {
 
         // END INDEX BUFFER
 
+        // Create the UBO for the object
+        if (descriptorManager->AllocateObjectDescriptors() != VKC_SUCCESS) {throw (std::runtime_error("FAIL_A!")); }
+        //if (descriptorManager->AllocateObjectDescriptors() != VKC_SUCCESS) {throw (std::runtime_error("FAIL_B!")); }
 
         // Create Sync Objects
 
@@ -160,6 +172,9 @@ namespace VKChis {
         } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
+
+        // Update the UBO
+        updateUniformBuffer(currentFrame);
 
         // Only reset the fence if we are submitting work
         vkResetFences(device->device, 1, &((*sync_objects)[currentFrame].inFlightFence));
@@ -210,6 +225,25 @@ namespace VKChis {
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
+    void VKCManager::updateUniformBuffer(uint32_t currentImage) {
+        static auto startTime = std::chrono::high_resolution_clock::now();
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+        CameraMatrixUBO cam_ubo{};
+        ModelMatrixUBO model_ubo{};
+        model_ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        cam_ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        cam_ubo.proj = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float) swapChain->swapChainExtent.height, 0.1f, 10.0f);
+        cam_ubo.proj[1][1] *= -1;
+
+        descriptorManager->UpdateUBOData(cam_ubo, 0, currentImage);
+        descriptorManager->UpdateUBOData(model_ubo, 1, currentImage);
+    }
+
     void VKCManager::RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -258,7 +292,15 @@ namespace VKChis {
         // INDICES
         vkCmdBindIndexBuffer(commandBufferIn, ind_buffer->buffer, 0, VK_INDEX_TYPE_UINT16);
 
-        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        // DESCRIPTORS
+        vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout,
+                                0, 1, &(descriptorManager->descriptorSets[0][currentFrame]), 1, nullptr);
+
+        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 0, 0, 0);
+
+        //vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout,
+        //                        0, 1, &(descriptorManager->descriptorSets[0][currentFrame]), 0, nullptr);
+        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 5, 0, 0);
 
         vkCmdEndRenderPass(commandBufferIn);
 

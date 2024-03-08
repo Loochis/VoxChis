@@ -8,8 +8,8 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <memory>
-#include "VKCSubsystem/VKCSwapChain.h"
-#include "VKCSubsystem/VKCDevice.h"
+#include "../VKCSubsystem/VKCSwapChain.h"
+#include "../VKCSubsystem/VKCDevice.h"
 
 namespace VKChis {
 
