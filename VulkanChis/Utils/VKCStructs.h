@@ -63,10 +63,11 @@ struct Vertex {
 struct CameraMatrixUBO {
     glm::mat4 view;
     glm::mat4 proj;
+    glm::mat4 model;
 };
 
 struct ModelMatrixUBO {
-    glm::mat4 model;
+    glm::mat4 *model = nullptr;
 };
 
 #endif //VOXCHIS_VKCSTRUCTS_H

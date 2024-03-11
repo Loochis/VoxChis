@@ -17,7 +17,7 @@ namespace VKChis {
     class VKCDescriptorManager {
     public:
         VkDescriptorPool descriptorPool;
-        vector<vector<VkDescriptorSet>> descriptorSets;
+        vector<VkDescriptorSet> descriptorSets;
 
         unique_ptr<vector<VKCBuffer>> uniform_buffers;
         vector<void*> uniformBuffersMapped; // Persistent mapped buffer vec
@@ -34,6 +34,8 @@ namespace VKChis {
 
         VkDescriptorSetLayout cameraSetLayout;
         VkDescriptorSetLayout modelSetLayout;
+
+        size_t dynamicAlignment;
 
         shared_ptr<VKCDevice> device;
         shared_ptr<VKCDescriptorSetLayout> descLayout;

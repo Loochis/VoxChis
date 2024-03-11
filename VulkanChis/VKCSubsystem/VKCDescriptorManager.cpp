@@ -8,10 +8,23 @@
 
 namespace VKChis {
     VKCDescriptorManager::VKCDescriptorManager(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, shared_ptr<VKCDescriptorSetLayout> &in_descLayout, int in_MAX_FRAMES_IN_FLIGHT, VkResult &result)
-    :   device(in_device),
+    :   flags(in_flags),
+        device(in_device),
         descLayout(in_descLayout),
         MAX_FRAMES_IN_FLIGHT(in_MAX_FRAMES_IN_FLIGHT)
     {
+        // Calculate required alignment based on minimum device offset alignment
+        VkPhysicalDeviceProperties deviceProps;
+        vkGetPhysicalDeviceProperties(device->physicalDevice, &deviceProps);
+        size_t minUboAlignment = deviceProps.limits.minUniformBufferOffsetAlignment;
+
+        dynamicAlignment = sizeof(glm::mat4);
+        if (minUboAlignment > 0) {
+            dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
+        }
+
+        print_colored("/// INFO /// - dynamic alignment: " + to_string(dynamicAlignment), WHITE);
+
         // Create the layouts
         VkDescriptorSetLayoutBinding uboLayoutBinding{};
         uboLayoutBinding.binding = 0;
@@ -59,66 +72,67 @@ namespace VKChis {
         if (enableValidation) print_colored("/// CLEAN /// - Destroyed Descriptor Pool", CYAN);
     }
 
-    // Creates and allocates an arbitrary UBO to facilitate object abstraction
+    // Creates and allocates an arbitrary UBO to facilitate object abstracdtion
     // TODO: Generify binding index and buffer struct
     vkc_Result VKCDescriptorManager::AllocateObjectDescriptors() {
 
-        // Create the descriptor sets
-        // Set layout information will be preserved until this object is destroyed AND VKCManager uninitializes
-        vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descLayout->descriptorSetLayout);
+        VkDeviceSize bufferSize = sizeof(CameraMatrixUBO);
+
+        uniform_buffers->reserve(MAX_FRAMES_IN_FLIGHT);
+        uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+        VkResult result;
+
+        std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descLayout->descriptorSetLayout);
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = descriptorPool;
         allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
         allocInfo.pSetLayouts = layouts.data();
 
-        // 2D vector of (per object/per framebuffer) descriptors
-        // This might be a perf hit if there are more frames in flight
-        descriptorSets.emplace_back();
-        ulong elem_idx = descriptorSets.size()-1;
+        // Allocate descriptor sets
+        descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 
-        descriptorSets[elem_idx].resize(MAX_FRAMES_IN_FLIGHT);
-
-        VkResult result = vkAllocateDescriptorSets(device->device, &allocInfo, descriptorSets[elem_idx].data());
+        result = vkAllocateDescriptorSets(device->device, &allocInfo, descriptorSets.data());
 
         if (result) {
-            if (flags & VKC_ENABLE_VALIDATION_LAYER) print_colored("/// WARN /// - Descriptor Set allocation failed!", YELLOW);
+            if (flags & VKC_ENABLE_VALIDATION_LAYER) print_colored("/// WARN /// - Failed to allocate descriptor sets!", YELLOW);
             return VKC_ALLOCATION_FAILURE;
         }
 
-        // Create the uniform buffer (single buffer contains all flightframe-based data)
-        ulong bufferSize = sizeof(UniformBufferObject) * MAX_FRAMES_IN_FLIGHT;
+        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            uniform_buffers->emplace_back(flags, device, bufferSize,
+                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                          result);
+            if (result) {
+                if (flags & VKC_ENABLE_VALIDATION_LAYER) print_colored("/// WARN /// - Uniform Buffer allocation failed!", YELLOW);
+                return VKC_ALLOCATION_FAILURE;
+            }
 
-        uniform_buffers->emplace_back(flags, device, bufferSize,
-                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, result);
+            // Persistent map memory
+            result = vkMapMemory(device->device, (*uniform_buffers)[i].bufferMemory, 0, bufferSize, 0, &uniformBuffersMapped[i]);
 
-        if (result) {
-            if (flags & VKC_ENABLE_VALIDATION_LAYER) print_colored("/// WARN /// - Uniform Buffer allocation failed!", YELLOW);
-            return VKC_ALLOCATION_FAILURE;
+            if (result) {
+                if (flags & VKC_ENABLE_VALIDATION_LAYER) print_colored("/// WARN /// - Failed to map persistent memory!", YELLOW);
+                return VKC_ALLOCATION_FAILURE;
+            }
         }
 
-        // Persistent map the buffer
-        uniformBuffersMapped.emplace_back();
-        result = vkMapMemory(device->device, (*uniform_buffers)[elem_idx].bufferMemory, 0, bufferSize, 0, &uniformBuffersMapped[elem_idx]);
 
-        if (result) {
-            if (flags & VKC_ENABLE_VALIDATION_LAYER) print_colored("/// WARN /// - Failed to map persistent memory!", YELLOW);
-            return VKC_ALLOCATION_FAILURE;
-        }
 
         // Update the objects descriptor sets
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = (*uniform_buffers)[elem_idx].buffer;
+            bufferInfo.buffer = (*uniform_buffers)[i].buffer;
 
             // Store frame-based buffers in single buffer with offsets
-            bufferInfo.offset = i*sizeof(UniformBufferObject);
-            bufferInfo.range = sizeof(UniformBufferObject);
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(CameraMatrixUBO);
 
             VkWriteDescriptorSet descriptorWrite{};
             descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = descriptorSets[elem_idx][i];
+            descriptorWrite.dstSet = descriptorSets[i];
             descriptorWrite.dstBinding = 0;
             descriptorWrite.dstArrayElement = 0;
 
@@ -137,7 +151,7 @@ namespace VKChis {
 
     vkc_Result VKCDescriptorManager::UpdateCameraUBOData(CameraMatrixUBO &ubo, int obj, int currentFrame) {
         // pointer offset to frame-based buffer
-        memcpy(uniformBuffersMapped[obj], &ubo, sizeof(ubo));
+        memcpy(uniformBuffersMapped[currentFrame], &ubo, sizeof(ubo));
         return VKC_SUCCESS;
     }
 } // VKChis
