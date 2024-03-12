@@ -51,8 +51,7 @@ namespace VKChis {
         unique_ptr<VKCSwapChain> swapChain;
         unique_ptr<VKCRenderPass> renderPass;
 
-        shared_ptr<VKCDescriptorSetLayout> descriptorSetLayout;
-        unique_ptr<VKCDescriptorManager> descriptorManager;
+        shared_ptr<VKCDescriptorManager> descriptorManager;
 
         shared_ptr<vector<VKCShaderModule>> shader_modules;
         unique_ptr<VKCGraphicsPipeline> graphicsPipeline;

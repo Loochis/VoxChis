@@ -11,7 +11,7 @@
 #include <memory>
 
 #include "VKCShaderModule.h"
-#include "VKCDescriptorSetLayout.h"
+#include "../VKCSubsystem/VKCDescriptorManager.h"
 
 using namespace std;
 
@@ -22,7 +22,7 @@ namespace VKChis {
         VkPipelineLayout pipelineLayout;
         VkPipeline graphicsPipeline;
 
-        explicit VKCGraphicsPipeline(uint32_t in_flags, shared_ptr<vector<VKCShaderModule>> &in_shader_modules, VkExtent2D in_swapChainExtent, shared_ptr<VKCDevice> &in_device, shared_ptr<VKCDescriptorSetLayout> &in_descSetLayout, VkRenderPass in_renderPass, VkResult &result);
+        explicit VKCGraphicsPipeline(uint32_t in_flags, shared_ptr<vector<VKCShaderModule>> &in_shader_modules, VkExtent2D in_swapChainExtent, shared_ptr<VKCDevice> &in_device, shared_ptr<VKCDescriptorManager> &in_descSetManager, VkRenderPass in_renderPass, VkResult &result);
         ~VKCGraphicsPipeline();
 
     private:
@@ -31,7 +31,7 @@ namespace VKChis {
         VkExtent2D swapChainExtent;
         shared_ptr<vector<VKCShaderModule>> shader_modules;
         shared_ptr<VKCDevice> device;
-        shared_ptr<VKCDescriptorSetLayout> descSetLayout;
+        shared_ptr<VKCDescriptorManager> descSetManager;
         VkRenderPass renderPass;
     };
 

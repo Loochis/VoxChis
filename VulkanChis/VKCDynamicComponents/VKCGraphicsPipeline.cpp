@@ -14,12 +14,12 @@ namespace VKChis {
     // The monster begins
     VKCGraphicsPipeline::VKCGraphicsPipeline(uint32_t in_flags, shared_ptr<vector<VKCShaderModule>> &in_shader_modules,
                                              VkExtent2D in_swapChainExtent, shared_ptr<VKCDevice> &in_device,
-                                             shared_ptr<VKCDescriptorSetLayout> &in_descSetLayout, VkRenderPass in_renderPass, VkResult &result)
+                                             shared_ptr<VKCDescriptorManager> &in_descSetManager, VkRenderPass in_renderPass, VkResult &result)
             : flags(in_flags),
               shader_modules(in_shader_modules),
               swapChainExtent(in_swapChainExtent),
               device(in_device),
-              descSetLayout(in_descSetLayout),
+              descSetManager(in_descSetManager),
               renderPass(in_renderPass) {
 
 
@@ -140,10 +140,12 @@ namespace VKChis {
         colorBlending.blendConstants[2] = 0.0f; // Optional
         colorBlending.blendConstants[3] = 0.0f; // Optional
 
+        //vector<VkDescriptorSetLayout> descSetLayouts = {descSetManager->transformationSetLayout};
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 1;
-        pipelineLayoutInfo.pSetLayouts = &(descSetLayout->descriptorSetLayout);
+        pipelineLayoutInfo.setLayoutCount = descSetManager->descSetLayouts.size();
+        pipelineLayoutInfo.pSetLayouts = descSetManager->descSetLayouts.data();
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
