@@ -134,10 +134,6 @@ namespace VKChis {
 
         // END INDEX BUFFER
 
-        // Create the UBO for the object
-        if (descriptorManager->AllocateObjectDescriptors() != VKC_SUCCESS) {throw (std::runtime_error("FAIL_A!")); }
-        //if (descriptorManager->AllocateObjectDescriptors() != VKC_SUCCESS) {throw (std::runtime_error("FAIL_B!")); }
-
         // Create Sync Objects
 
         sync_objects = make_shared<vector<VKCSyncObjects>>();
@@ -226,17 +222,14 @@ namespace VKChis {
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-        CameraMatrixUBO cam_ubo{};
-        ModelMatrixUBO mod_ubo{};
-        mod_ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        descriptorManager->cameraMatrix.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        cam_ubo.view = glm::lookAt(glm::vec3(sin(time), 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        descriptorManager->cameraMatrix.proj = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float) swapChain->swapChainExtent.height, 0.1f, 10.0f);
+        descriptorManager->cameraMatrix.proj[1][1] *= -1;
 
-        cam_ubo.proj = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float) swapChain->swapChainExtent.height, 0.1f, 10.0f);
-        cam_ubo.proj[1][1] *= -1;
+        descriptorManager->modelMatrix.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        descriptorManager->UpdateCameraUBOData(cam_ubo, currentImage);
-        descriptorManager->UpdateModelUBOData(mod_ubo, currentImage);
+        descriptorManager->UpdateUBOs(currentImage);
     }
 
     void VKCManager::RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex) {
@@ -290,13 +283,23 @@ namespace VKChis {
         // DESCRIPTORS
         // bind global camera buffer
         vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout,
-                                0, (descriptorManager->descriptorSets[currentFrame]).size(), (descriptorManager->descriptorSets[currentFrame]).data(), 0, nullptr);
+                                0, 2, (descriptorManager->descriptorSets[currentFrame]).data(), 0, nullptr);
+
+        uint32_t dynamicOffset = 0;
+
+        // bind object 1
+        //dynamicOffset = 0 * static_cast<uint32_t>(descriptorManager->dynamicAlignment);
+        //vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout,
+        //                        0, 1, &(descriptorManager->descriptorSets[currentFrame][1]), 0, nullptr);
 
         vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 0, 0, 0);
 
+        // bind object 2
+        //dynamicOffset = 1 * static_cast<uint32_t>(descriptorManager->dynamicAlignment);
         //vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout,
-        //                        0, 1, &(descriptorManager->descriptorSets[0][currentFrame]), 0, nullptr);
-        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 5, 0, 0);
+        //                        0, 1, &(descriptorManager->descriptorSets[currentFrame][1]), 1, &dynamicOffset);
+
+        //vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 5, 0, 0);
 
         vkCmdEndRenderPass(commandBufferIn);
 

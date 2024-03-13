@@ -26,14 +26,22 @@ namespace VKChis {
         VKCDescriptorManager(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, int in_MAX_FRAMES_IN_FLIGHT, VkResult &result);
         ~VKCDescriptorManager();
 
+        vkc_Result UpdateUBOs(int currentFrame);
+
         // Per Object utils
         vkc_Result AllocateObjectDescriptors();
-        vkc_Result UpdateCameraUBOData(CameraMatrixUBO &ubo, int currentFrame);
-        vkc_Result UpdateModelUBOData(ModelMatrixUBO &ubo, int currentFrame);
+        //vkc_Result UpdateCameraUBOData(CameraMatrixUBO &ubo, int currentFrame);
+        //vkc_Result UpdateModelUBOData(ModelMatrixUBO &ubo, int currentFrame);
+
+
+        // Modifiable Data
+        CameraMatrixUBO cameraMatrix;
+        ModelMatrixUBO modelMatrix;
+
+        // Read-only
+        size_t dynamicAlignment;
     private:
         uint32_t flags;
-
-        size_t dynamicAlignment;
 
         shared_ptr<VKCDevice> device;
         int MAX_FRAMES_IN_FLIGHT;

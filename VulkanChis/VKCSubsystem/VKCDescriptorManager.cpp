@@ -17,13 +17,6 @@ namespace VKChis {
         vkGetPhysicalDeviceProperties(device->physicalDevice, &deviceProps);
         size_t minUboAlignment = deviceProps.limits.minUniformBufferOffsetAlignment;
 
-        dynamicAlignment = sizeof(glm::mat4);
-        if (minUboAlignment > 0) {
-            dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
-        }
-
-        print_colored("/// INFO /// - dynamic alignment: " + to_string(dynamicAlignment), WHITE);
-
         // Create the layouts
         // CameraMatrix UBO Layout
         VkDescriptorSetLayoutBinding camMatrixLayout{};
@@ -61,7 +54,7 @@ namespace VKChis {
 
         // Create the descriptor pool
         // Poolsize specifies max quantity of a *type* of descriptor
-        VkDescriptorPoolSize poolSize{};
+        VkDescriptorPoolSize poolSize;
         poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         poolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * 2;
 
@@ -107,7 +100,6 @@ namespace VKChis {
         // Allocate descriptor sets
 
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            print_colored("/// INFO /// - Attempting to allocate " + to_string(descriptorSets[i].size()) + "!", YELLOW);
             result = vkAllocateDescriptorSets(device->device, &allocInfo, descriptorSets[i].data());
 
             if (result) {
@@ -181,7 +173,7 @@ namespace VKChis {
             modDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             modDescriptorWrite.descriptorCount = 1;
 
-            modDescriptorWrite.pBufferInfo = &camBufferInfo;
+            modDescriptorWrite.pBufferInfo = &modBufferInfo;
             modDescriptorWrite.pImageInfo = nullptr; // Optional
             modDescriptorWrite.pTexelBufferView = nullptr; // Optional
 
@@ -208,14 +200,9 @@ namespace VKChis {
         return VKC_SUCCESS;
     }
 
-    vkc_Result VKCDescriptorManager::UpdateCameraUBOData(CameraMatrixUBO &ubo, int currentFrame) {
-        // pointer offset to frame-based buffer
-        memcpy(uniformBuffersMapped[currentFrame][0], &ubo, sizeof(ubo));
-        return VKC_SUCCESS;
-    }
-
-    vkc_Result VKCDescriptorManager::UpdateModelUBOData(ModelMatrixUBO &ubo, int currentFrame) {
-        memcpy(uniformBuffersMapped[currentFrame][1], &ubo, sizeof(ubo));
+    vkc_Result VKCDescriptorManager::UpdateUBOs(int currentFrame) {
+        memcpy(uniformBuffersMapped[currentFrame][0], &cameraMatrix, sizeof(cameraMatrix));
+        memcpy(uniformBuffersMapped[currentFrame][1], &modelMatrix, sizeof(modelMatrix));
         return VKC_SUCCESS;
     }
 } // VKChis
