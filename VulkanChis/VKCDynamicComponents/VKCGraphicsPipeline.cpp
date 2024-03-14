@@ -142,12 +142,20 @@ namespace VKChis {
 
         //vector<VkDescriptorSetLayout> descSetLayouts = {descSetManager->transformationSetLayout};
 
+        //setup push constants
+        VkPushConstantRange push_constant;
+        push_constant.offset = 0;
+        push_constant.size = sizeof(glm::mat4);
+        push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = descSetManager->descSetLayouts.size();
-        pipelineLayoutInfo.pSetLayouts = descSetManager->descSetLayouts.data();
-        pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-        pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+        //pipelineLayoutInfo.setLayoutCount = descSetManager->descSetLayouts.size();
+        //pipelineLayoutInfo.pSetLayouts = descSetManager->descSetLayouts.data();
+        pipelineLayoutInfo.setLayoutCount = 0;
+        pipelineLayoutInfo.pSetLayouts = nullptr;
+        pipelineLayoutInfo.pushConstantRangeCount = 1; // Optional
+        pipelineLayoutInfo.pPushConstantRanges = &push_constant; // Optional
 
         result = vkCreatePipelineLayout(device->device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
         if (result) {

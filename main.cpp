@@ -10,7 +10,7 @@ int main() {
 
     uint32_t flags = VKC_DISPLAY_GPU_INFO | VKC_ENABLE_VALIDATION_LAYER;
 
-    std::shared_ptr<WINChisInstance> wcInst = std::make_shared<WINChisInstance>(flags, 1920, 1080, "test");
+    std::shared_ptr<WINChisInstance> wcInst = std::make_shared<WINChisInstance>(flags, 1280, 720, "test");
     VKCManager vkcMan = VKCManager(wcInst, flags);
 
     // Main loop
@@ -18,7 +18,6 @@ int main() {
         glfwPollEvents();
         vkcMan.DrawFrame();
     }
-
 
     return 0;
 }

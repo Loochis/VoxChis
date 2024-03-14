@@ -59,9 +59,10 @@ namespace VKChis {
         // Create Framebuffer
         swapChain->createFrameBuffers(renderPass->renderPass);
 
-        descriptorManager = make_shared<VKCDescriptorManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
-        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Descriptor Pool/Set!");
-        if (enableValidation)  print_colored("/// GOOD /// - Created Descriptor Pool and Set", GREEN);
+        // Create Descriptors
+        //descriptorManager = make_shared<VKCDescriptorManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
+        //if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Descriptor Pool/Set!");
+        //if (enableValidation)  print_colored("/// GOOD /// - Created Descriptor Pool and Set", GREEN);
 
         // Create GFX Pipeline
 
@@ -222,14 +223,17 @@ namespace VKChis {
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-        descriptorManager->cameraMatrix.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        viewMat = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        descriptorManager->cameraMatrix.proj = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float) swapChain->swapChainExtent.height, 0.1f, 10.0f);
-        descriptorManager->cameraMatrix.proj[1][1] *= -1;
+        projMat = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float) swapChain->swapChainExtent.height, 0.1f, 10.0f);
+        projMat[1][1] *= -1;
 
-        descriptorManager->modelMatrix.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        obj1Mat = projMat * viewMat * glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        obj2Mat = projMat * viewMat * glm::rotate(glm::mat4(1.0f), time * glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        descriptorManager->UpdateUBOs(currentImage);
+
+
+        //descriptorManager->UpdateUBOs(currentImage);
     }
 
     void VKCManager::RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex) {
@@ -280,26 +284,14 @@ namespace VKChis {
         // INDICES
         vkCmdBindIndexBuffer(commandBufferIn, ind_buffer->buffer, 0, VK_INDEX_TYPE_UINT16);
 
-        // DESCRIPTORS
-        // bind global camera buffer
-        vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout,
-                                0, 2, (descriptorManager->descriptorSets[currentFrame]).data(), 0, nullptr);
-
-        uint32_t dynamicOffset = 0;
 
         // bind object 1
-        //dynamicOffset = 0 * static_cast<uint32_t>(descriptorManager->dynamicAlignment);
-        //vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout,
-        //                        0, 1, &(descriptorManager->descriptorSets[currentFrame][1]), 0, nullptr);
-
+        vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &obj1Mat);
         vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 0, 0, 0);
 
         // bind object 2
-        //dynamicOffset = 1 * static_cast<uint32_t>(descriptorManager->dynamicAlignment);
-        //vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout,
-        //                        0, 1, &(descriptorManager->descriptorSets[currentFrame][1]), 1, &dynamicOffset);
-
-        //vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 5, 0, 0);
+        vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &obj2Mat);
+        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 5, 0, 0);
 
         vkCmdEndRenderPass(commandBufferIn);
 

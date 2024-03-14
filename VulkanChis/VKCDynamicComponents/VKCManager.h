@@ -31,6 +31,11 @@ namespace VKChis {
 
     class VKCManager {
     private:
+        // TEMP
+        glm::mat4 projMat;
+        glm::mat4 viewMat;
+        glm::mat4 obj1Mat;
+        glm::mat4 obj2Mat;
 
         // CONST vals,
         const std::vector<const char*> deviceExtensions = {
