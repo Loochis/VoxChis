@@ -13,15 +13,29 @@ using namespace std;
 namespace VKChis {
 
     const std::vector<Vertex> vertices = {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+            {{ 1.0f, -1.0f, -1.0f}},
+            {{ 1.0f, -1.0f,  1.0f}},
+            {{-1.0f, -1.0f,  1.0f}},
+            {{-1.0f, -1.0f, -1.0f}},
+            {{ 1.0f,  1.0f, -1.0f}},
+            {{ 1.0f,  1.0f,  1.0f}},
+            {{-1.0f,  1.0f,  1.0f}},
+            {{-1.0f,  1.0f, -1.0f}}
     };
 
     const std::vector<uint16_t> indices = {
-            0, 1, 2, 2, 3, 0,
-            0, 1, 3, 1, 2, 3
+            1, 2, 3,
+            7, 6, 5,
+            4, 5, 1,
+            5, 6, 2,
+            2, 6, 7,
+            0, 3, 7,
+            0, 1, 3,
+            4, 7, 5,
+            0, 4, 1,
+            1, 5, 2,
+            3, 2, 7,
+            4, 0, 7
     };
 
     VKCManager::VKCManager(std::shared_ptr<WINChisInstance> in_window, uint32_t in_flags)
@@ -228,8 +242,8 @@ namespace VKChis {
         projMat = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float) swapChain->swapChainExtent.height, 0.1f, 10.0f);
         projMat[1][1] *= -1;
 
-        obj1Mat = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 1.0f)));
-        obj1Mat = glm::scale(obj1Mat, glm::vec3(2.0f));
+        obj1Mat = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
+        obj1Mat = glm::scale(obj1Mat, glm::vec3(0.8f));
 
         //obj1Mat = projMat * viewMat * obj1Mat;
         obj2Mat = glm::rotate(glm::mat4(1.0f), time * glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -288,15 +302,15 @@ namespace VKChis {
         vkCmdBindIndexBuffer(commandBufferIn, ind_buffer->buffer, 0, VK_INDEX_TYPE_UINT16);
 
 
-        vector<glm::mat4> obj1Push = {projMat*viewMat*obj1Mat, glm::inverse(obj1Mat)};
+        vector<glm::mat4> obj1Push = {projMat*viewMat*obj1Mat, obj1Mat};
         vector<glm::mat4> obj2Push = {projMat*viewMat*obj2Mat, obj2Mat};
         // bind object 1
         vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, obj1Push.data());
-        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 0, 0, 0);
+        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(36), 1, 0, 0, 0);
 
         // bind object 2
-        vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, obj2Push.data());
-        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 5, 0, 0);
+        //vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, obj2Push.data());
+        //vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 5, 0, 0);
 
         vkCmdEndRenderPass(commandBufferIn);
 
