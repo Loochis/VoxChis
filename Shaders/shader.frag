@@ -1,6 +1,7 @@
 #version 450
 
 layout(location = 0) in vec4 verPos;
+layout(location = 1) in vec3 verDir;
 
 layout(location = 0) out vec4 outColor;
 
@@ -10,38 +11,97 @@ layout(push_constant) uniform constants {
 } p_const;
 
 void main() {
-    //outColor = vec4(fragColor, 1.0);
-    //vec4 screencoord = vec4(gl_FragCoord.x/1280 * 2 - 1, gl_FragCoord.y/720 * 2 - 1, 0, 1);
-    //vec4 modelcoord = p_const.MVP * screencoord;
-    //vec4 modelpos = p_const.m_mat * verPos;
-    //vec3 colors = vec3(mod(verPos.x, 0.25)*4, mod(verPos.y, 0.25)*4, mod(verPos.z, 0.25)*4);
-    //outColor = vec4(colors, 1);
 
-    vec4 fragCoordNorm = vec4(gl_FragCoord.x/1280 * 2 - 1, gl_FragCoord.x/720 * 2 - 1, gl_FragCoord.z, 1);
-    vec3 verDir = vec3(2,2,2) - vec3(p_const.imvp_mat * verPos);
+    vec3 curPos = vec3(verPos*4.0);
+    ivec3 curCell = ivec3(ceil(curPos));
+    float t_total = 0;
 
-    vec3 curPos = vec3(verPos);
-    ivec3 curCell = ivec3(floor(verPos.x), floor(verPos.y), floor(verPos.z));
+    // compute axis deltas
+    vec3 t_val_max = abs(1.0 / verDir);
 
-    vec3 dist = mod(curPos, 1.0);
-    if (verDir.x > 0) dist.x = 1-dist.x;
-    if (verDir.y > 0) dist.y = 1-dist.y;
-    if (verDir.z > 0) dist.z = 1-dist.z;
+    // compute initial deltas
+    vec3 dists = mod(curPos, 1.0);
 
-    if (dist.x == 0) dist.x = 1.0;
-    if (dist.y == 0) dist.y = 1.0;
-    if (dist.z == 0) dist.z = 1.0;
+    if (verDir.x < 0) dists.x = 1 - dists.x;
+    if (verDir.y < 0) dists.y = 1 - dists.y;
+    if (verDir.z < 0) dists.z = 1 - dists.z;
 
-    dist /= abs(verDir);
+    if (dists.x == 0) dists.x = 1;
+    else if (dists.x == 1) dists.x = 0;
+    if (dists.y == 0) dists.y = 1;
+    else if (dists.y == 1) dists.y = 0;
+    if (dists.z == 0) dists.z = 1;
+    else if (dists.z == 1) dists.z = 0;
 
-    //for (int i = 0; i < 10; i++) {
-    //
-    //}
-    //if (dist.x < dist.y && dist.x < dist.z)
+    vec3 t_val_cur = dists / abs(verDir);
+
+
+    outColor = vec4(0, 0, 0, 0);
+
+    for (int i = 0; i < 40; i++) {
+        vec4 tempOutput = vec4(0,0,0,0);
+        if (t_val_cur.x < t_val_cur.y && t_val_cur.x < t_val_cur.z) {
+            if (verDir.x < 0)   curCell.x++;
+            else                curCell.x--;
+
+            tempOutput = vec4(sign(verDir.x), 0, 0, 0);
+            t_total += t_val_cur.x;
+
+            t_val_cur.y -= t_val_cur.x;
+            t_val_cur.z -= t_val_cur.x;
+            t_val_cur.x = t_val_max.x;
+        }
+        else if (t_val_cur.y < t_val_cur.x && t_val_cur.y < t_val_cur.z) {
+            if (verDir.y < 0)   curCell.y++;
+            else                curCell.y--;
+
+            tempOutput = vec4(0, sign(verDir.y), 0, 0);
+            t_total += t_val_cur.y;
+
+            t_val_cur.x -= t_val_cur.y;
+            t_val_cur.z -= t_val_cur.y;
+            t_val_cur.y = t_val_max.y;
+        }
+        else {
+            if (verDir.z < 0)   curCell.z++;
+            else                curCell.z--;
+
+            tempOutput = vec4(0, 0, sign(verDir.z), 0);
+            t_total += t_val_cur.z;
+
+            t_val_cur.x -= t_val_cur.z;
+            t_val_cur.y -= t_val_cur.z;
+            t_val_cur.z = t_val_max.z;
+        }
+
+        if (length(curCell) < 1.5) {
+            outColor = inverse(p_const.imvp_mat) * tempOutput;
+            outColor.w = 1;
+            break;
+        }
+    }
+
+    //outColor = vec4(verDir, 1);
+
+    /*
+    if (t_val_cur.x < t_val_cur.y && t_val_cur.x < t_val_cur.z) {
+        outColor = vec4(1, 0, 0, 1);
+    }
+    else if (t_val_cur.y < t_val_cur.x && t_val_cur.y < t_val_cur.z) {
+        outColor = vec4(0, 1, 0, 1);
+    }
+    else {
+        outColor = vec4(0, 0, 1, 1);
+    }
+*/
+
+    //outColor =
+
+    //if (t_val_cur.x < t_val_cur.y && t_val_cur.x < t_val_cur.z)
     //    outColor = vec4(1, 0, 0, 1);
-    //else if (dist.y < dist.x && dist.y < dist.z)
+    //else if (t_val_cur.y < t_val_cur.x && t_val_cur.y < t_val_cur.z)
     //    outColor = vec4(0, 1, 0, 1);
     //else
     //    outColor = vec4(0, 0, 1, 1);
-    outColor = vec4(verDir, 1);
+
 }
