@@ -242,7 +242,7 @@ namespace VKChis {
         projMat = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float) swapChain->swapChainExtent.height, 0.1f, 10.0f);
         projMat[1][1] *= -1;
 
-        obj1Mat = glm::translate(glm::mat4(1.0f), glm::vec3(-1, 0, 0));
+        obj1Mat = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
         obj1Mat = glm::rotate(obj1Mat, time * glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
         obj1Mat = glm::scale(obj1Mat, glm::vec3(1.0f, 1.0f, 1.0f));
 
@@ -307,8 +307,8 @@ namespace VKChis {
         vector<glm::mat4> obj1Push = {projMat*viewMat*obj1Mat, glm::inverse(obj1Mat)};
         vector<glm::mat4> obj2Push = {projMat*viewMat*obj2Mat, obj2Mat};
         // bind object 1
-        vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, obj1Push.data());
-        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(36), 1, 0, 0, 0);
+        vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(glm::mat4) * 2, obj1Push.data());
+        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(36), 2, 0, 0, 0);
 
         // bind object 2
         //vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, obj2Push.data());
@@ -324,6 +324,8 @@ namespace VKChis {
     void VKCManager::RecreateSwapChain() {
         // Wait for device idle
         vkDeviceWaitIdle(device->device);
+
+        cout << "RECReATED SWAPCHAIN";
 
         // Disable validation flags to stop console spam
         if (swapChain->flags & VKC_ENABLE_VALIDATION_LAYER)

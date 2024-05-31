@@ -12,7 +12,9 @@ layout(push_constant) uniform constants {
 
 void main() {
 
-    vec3 curPos = vec3(verPos*4.0);
+    outColor = vec4(0);
+
+    vec3 curPos = vec3(verPos*10.0);
     ivec3 curCell = ivec3(ceil(curPos));
     float t_total = 0;
 
@@ -36,7 +38,7 @@ void main() {
     vec3 t_val_cur = dists / abs(verDir);
 
 
-    outColor = vec4(0, 0, 0, 0);
+    vec3 norm = vec3(0);
 
     for (int i = 0; i < 40; i++) {
         vec4 tempOutput = vec4(0,0,0,0);
@@ -74,14 +76,20 @@ void main() {
             t_val_cur.z = t_val_max.z;
         }
 
-        if (length(curCell) < 1.5) {
-            outColor = inverse(p_const.imvp_mat) * tempOutput;
-            outColor.w = 1;
+        if (curCell.z < (sin((curCell.x + 1) / 5.0) + 1)*5.0 - 5) {
+            norm = vec3(inverse(p_const.imvp_mat) * tempOutput);
+
+            float brightness = 0.1 + clamp(dot(norm, normalize(vec3(-3, 0, 1))), 0.0, 1.0);
+            outColor = vec4(curCell / 5.0, 1) * vec4(brightness, brightness, brightness, 1);
+            //outColor =
+
             break;
         }
     }
 
-    //outColor = vec4(verDir, 1);
+
+
+
 
     /*
     if (t_val_cur.x < t_val_cur.y && t_val_cur.x < t_val_cur.z) {
