@@ -31,6 +31,9 @@ namespace VKChis {
         VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
 
+        VkSurfaceFormatKHR surfaceFormat;
+        VkPresentModeKHR presentMode;
+
         VKCSwapChain(uint32_t in_flags,
                      VkSurfaceKHR in_surface,
                      shared_ptr<VKCDevice> &in_device,

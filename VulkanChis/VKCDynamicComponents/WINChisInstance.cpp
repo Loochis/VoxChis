@@ -10,7 +10,7 @@
 
 namespace VKChis {
     WINChisInstance::WINChisInstance(uint32_t in_flags, int width, int height, const std::string& title)
-    :   flags(in_flags)
+    :   flags(in_flags), width(width), height(height)
     {
         bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 

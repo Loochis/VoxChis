@@ -22,8 +22,8 @@ namespace VKChis {
         indices(device->indices),
         swapChainSupport(device->swapChainSupport)
     {
-        VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-        VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+        surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+        presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
         VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
         uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;

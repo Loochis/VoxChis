@@ -65,6 +65,14 @@ namespace VKChis {
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create SwapChain!");
         if (enableValidation)  print_colored("/// GOOD /// - Created SwapChain", GREEN);
 
+        // imgui testing
+        imgui_wd.Surface = surface->surface;
+        imgui_wd.SurfaceFormat = swapChain->surfaceFormat;
+        imgui_wd.PresentMode = swapChain->presentMode;
+        imgui_wd.ClearEnable = false;
+
+        ImGui_ImplVulkanH_CreateOrResizeWindow(instance->instance, device->physicalDevice, device->device, &imgui_wd, device->indices.graphicsFamily.value(), nullptr, window->width, window->height, imgui_imgcount);
+
         // Create Render Pass
         renderPass = std::make_unique<VKCRenderPass>(flags, device, swapChain->swapChainImageFormat, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Render Pass!");
@@ -160,6 +168,38 @@ namespace VKChis {
 
         if (enableValidation) print_colored("/// INFO /// - Created SyncObjects (" + to_string(MAX_FRAMES_IN_FLIGHT) + ")", WHITE);
 
+        // DO IMGUI STUFF
+
+        // Setup Dear ImGui context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+        // Setup Dear ImGui style
+        ImGui::StyleColorsDark();
+        //ImGui::StyleColorsLight();
+
+        // Setup Platform/Renderer backends
+        ImGui_ImplGlfw_InitForVulkan(window->window, true);
+        ImGui_ImplVulkan_InitInfo init_info = {};
+        init_info.Instance = instance->instance;
+        init_info.PhysicalDevice = device->physicalDevice;
+        init_info.Device = device->device;
+        init_info.QueueFamily = device->indices.graphicsFamily.value();
+        init_info.Queue = device->graphicsQueue;
+        init_info.PipelineCache = VK_NULL_HANDLE;
+        init_info.DescriptorPool = descriptorManager->descriptorPool;
+        init_info.RenderPass = imgui_wd.RenderPass;
+        init_info.Subpass = 0;
+        init_info.MinImageCount = imgui_imgcount;
+        init_info.ImageCount = imgui_wd.ImageCount;
+        init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        init_info.Allocator = nullptr;
+        //init_info.CheckVkResultFn = check_vk_result;
+        ImGui_ImplVulkan_Init(&init_info);
+
         // DONE //
         if (enableValidation) print_colored("\n/// DONE INITIALIZATION ///\n", MAGENTA);
     }
@@ -179,14 +219,40 @@ namespace VKChis {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
+        // Get the IMGUI frame
+        //ImGui_ImplVulkanH_Frame* fd = &imgui_wd.Frames[imgui_wd.FrameIndex];
+
         // Update the UBO
         updateUniformBuffer(currentFrame);
 
         // Only reset the fence if we are submitting work
         vkResetFences(device->device, 1, &((*sync_objects)[currentFrame].inFlightFence));
 
+        // Draw some stuff with IMGUI
+
+        // Set the clear value
+        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 0.10f);
+        imgui_wd.ClearValue.color.float32[0] = clear_color.x * clear_color.w;
+        imgui_wd.ClearValue.color.float32[1] = clear_color.y * clear_color.w;
+        imgui_wd.ClearValue.color.float32[2] = clear_color.z * clear_color.w;
+        imgui_wd.ClearValue.color.float32[3] = clear_color.w;
+
+        // Start the Dear ImGui frame
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+        ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+
+        ImGui::SliderFloat("float", &testslider, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::End();
+
+        ImGui::Render();
+        ImDrawData* draw_data = ImGui::GetDrawData();
+
         vkResetCommandBuffer(commandManager->commandBuffers[currentFrame],  0);
-        RecordCommandBuffer(commandManager->commandBuffers[currentFrame], imageIndex);
+        RecordCommandBuffer(commandManager->commandBuffers[currentFrame], imageIndex, draw_data);
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -255,7 +321,7 @@ namespace VKChis {
         descriptorManager->UpdateUBOs(currentImage);
     }
 
-    void VKCManager::RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex) {
+    void VKCManager::RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex, ImDrawData* draw_data) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = 0; // Optional
@@ -265,18 +331,20 @@ namespace VKChis {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = renderPass->renderPass;
-        renderPassInfo.framebuffer = swapChain->swapChainFramebuffers[imageIndex];
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = swapChain->swapChainExtent;
+        // RENDER GFX
+
+        VkRenderPassBeginInfo gfxPassInfo{};
+        gfxPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        gfxPassInfo.renderPass = renderPass->renderPass;
+        gfxPassInfo.framebuffer = swapChain->swapChainFramebuffers[imageIndex];
+        gfxPassInfo.renderArea.offset = {0, 0};
+        gfxPassInfo.renderArea.extent = swapChain->swapChainExtent;
 
         VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = &clearColor;
+        gfxPassInfo.clearValueCount = 1;
+        gfxPassInfo.pClearValues = &clearColor;
 
-        vkCmdBeginRenderPass(commandBufferIn, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(commandBufferIn, &gfxPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         vkCmdBindPipeline(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->graphicsPipeline);
 
@@ -328,6 +396,24 @@ namespace VKChis {
 
         vkCmdEndRenderPass(commandBufferIn);
 
+        // RENDER GUI
+
+        VkRenderPassBeginInfo guiPassInfo = {};
+        guiPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        guiPassInfo.renderPass = imgui_wd.RenderPass;
+        guiPassInfo.framebuffer = swapChain->swapChainFramebuffers[imageIndex];
+        guiPassInfo.renderArea.offset = {0, 0};
+        guiPassInfo.renderArea.extent = swapChain->swapChainExtent;
+        guiPassInfo.clearValueCount = 1;
+        guiPassInfo.pClearValues = &imgui_wd.ClearValue;
+
+        vkCmdBeginRenderPass(commandBufferIn, &guiPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        // Record dear imgui primitives into command buffer
+        ImGui_ImplVulkan_RenderDrawData(draw_data, commandBufferIn);
+
+        vkCmdEndRenderPass(commandBufferIn);
+
         if (vkEndCommandBuffer(commandBufferIn) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");
         }
@@ -361,5 +447,8 @@ namespace VKChis {
     VKCManager::~VKCManager() {
         // Wait for device to be idle before destroying
         vkDeviceWaitIdle(device->device);
+
+        // Destroy the imgui instance
+        ImGui_ImplVulkanH_DestroyWindow(instance->instance, device->device, &imgui_wd, nullptr);
     }
 } // VKChis

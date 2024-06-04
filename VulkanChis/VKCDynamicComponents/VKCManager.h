@@ -25,6 +25,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
 
+// IMGUI
+#include "../../imgui/imgui.h"
+#include "../../imgui/backends/imgui_impl_glfw.h"
+#include "../../imgui/backends/imgui_impl_vulkan.h"
+
 using namespace std;
 
 namespace VKChis {
@@ -67,9 +72,14 @@ namespace VKChis {
         unique_ptr<VKCBuffer> vert_buffer;
         unique_ptr<VKCBuffer> ind_buffer;
 
+        // imgui testing
+        ImGui_ImplVulkanH_Window imgui_wd;
+        int                      imgui_imgcount = 2;
+        float testslider = 0;
+
         int currentFrame = 0;
 
-        void RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex);
+        void RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex, ImDrawData* draw_data);
         void RecreateSwapChain();
     public:
         VKCManager(std::shared_ptr<WINChisInstance> in_window, uint32_t in_flags);

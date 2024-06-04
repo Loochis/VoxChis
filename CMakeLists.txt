@@ -5,10 +5,11 @@ set(CMAKE_CXX_FLAGS "-O2")
 project(VoxChis)
 
 add_subdirectory(VulkanChis)
+add_subdirectory(imgui)
 
 include_directories(.)
 
 file(GLOB SRC_FILES *.cpp)
 add_executable(VoxChis ${SRC_FILES})
 
-target_link_libraries(VoxChis PRIVATE VKChis)
+target_link_libraries(VoxChis PRIVATE VKChis ImGUI)
