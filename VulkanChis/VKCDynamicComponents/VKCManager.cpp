@@ -74,9 +74,9 @@ namespace VKChis {
         swapChain->createFrameBuffers(renderPass->renderPass);
 
         // Create Descriptors
-        //descriptorManager = make_shared<VKCDescriptorManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
-        //if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Descriptor Pool/Set!");
-        //if (enableValidation)  print_colored("/// GOOD /// - Created Descriptor Pool and Set", GREEN);
+        descriptorManager = make_shared<VKCDescriptorManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
+        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Descriptor Pool/Set!");
+        if (enableValidation)  print_colored("/// GOOD /// - Created Descriptor Pool and Set", GREEN);
 
         // Create GFX Pipeline
 
@@ -242,17 +242,17 @@ namespace VKChis {
         projMat = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float) swapChain->swapChainExtent.height, 0.1f, 10.0f);
         projMat[1][1] *= -1;
 
-        obj1Mat = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
+        obj1Mat = glm::translate(glm::mat4(1.0f), glm::vec3(2, 0, 0));
         obj1Mat = glm::rotate(obj1Mat, time * glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
         obj1Mat = glm::scale(obj1Mat, glm::vec3(1.0f, 1.0f, 1.0f));
 
 
         //obj1Mat = projMat * viewMat * obj1Mat;
-        obj2Mat = glm::rotate(glm::mat4(1.0f), time * glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        obj2Mat = glm::translate(glm::mat4(1.0f), glm::vec3(-2, 0, 0));
+        obj2Mat = glm::rotate(obj2Mat, time * glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-
-
-        //descriptorManager->UpdateUBOs(currentImage);
+        descriptorManager->cameraMatrix.vp_mat = projMat * viewMat;
+        descriptorManager->UpdateUBOs(currentImage);
     }
 
     void VKCManager::RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex) {
@@ -303,16 +303,28 @@ namespace VKChis {
         // INDICES
         vkCmdBindIndexBuffer(commandBufferIn, ind_buffer->buffer, 0, VK_INDEX_TYPE_UINT16);
 
+        PushConstData pushConstData{};
+        glm::vec3 camPos;
 
-        vector<glm::mat4> obj1Push = {projMat*viewMat*obj1Mat, glm::inverse(obj1Mat)};
-        vector<glm::mat4> obj2Push = {projMat*viewMat*obj2Mat, obj2Mat};
-        // bind object 1
-        vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(glm::mat4) * 2, obj1Push.data());
-        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(36), 2, 0, 0, 0);
+        // bind global consts
+        vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout, 0, 1, descriptorManager->descriptorSets[currentFrame].data(), 0,
+                                nullptr);
 
-        // bind object 2
-        //vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, obj2Push.data());
-        //vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(6), 1, 5, 0, 0);
+        camPos = glm::vec3(glm::inverse(obj1Mat) * glm::vec4(0, 5, 5, 1));
+        pushConstData.m_mat = obj1Mat;
+        pushConstData.im_campos = camPos;
+
+        // draw object 1
+        vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstData), &pushConstData);
+        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(36), 1, 0, 0, 0);
+
+        camPos = glm::vec3(glm::inverse(obj2Mat) * glm::vec4(0, 5, 5, 1));
+        pushConstData.m_mat = obj2Mat;
+        pushConstData.im_campos = camPos;
+
+        // draw object 2
+        vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstData), &pushConstData);
+        vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(36), 1, 0, 0, 0);
 
         vkCmdEndRenderPass(commandBufferIn);
 
@@ -325,7 +337,7 @@ namespace VKChis {
         // Wait for device idle
         vkDeviceWaitIdle(device->device);
 
-        cout << "RECReATED SWAPCHAIN";
+        cout << "RECREATED SWAPCHAIN";
 
         // Disable validation flags to stop console spam
         if (swapChain->flags & VKC_ENABLE_VALIDATION_LAYER)

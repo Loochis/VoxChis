@@ -55,12 +55,12 @@ struct Vertex {
 };
 
 struct CameraMatrixUBO {
-    glm::mat4 view;
-    glm::mat4 proj;
+    glm::mat4 vp_mat;
 };
 
-struct ModelMatrixUBO {
-    glm::mat4 model;
+struct PushConstData {
+    glm::mat4 m_mat;
+    glm::vec3 im_campos;
 };
 
 #endif //VOXCHIS_VKCSTRUCTS_H

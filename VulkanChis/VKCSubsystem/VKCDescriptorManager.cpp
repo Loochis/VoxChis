@@ -73,9 +73,9 @@ namespace VKChis {
         }
 
         // Uniform buffer layout:
-        // Double Buffer > DB_0              | DB_1
-        // UBO           > UBO_CAM | UBO_MOD | UBO_CAM | UBO_MOD
-        // Mapped Index  > 0,0     | 0,1     | 1,0     | 1,1
+        // Double Buffer > DB_0    | DB_1
+        // UBO           > UBO_CAM | UBO_CAM
+        // Mapped Index  > 0,0     | 1,0
 
         // Init uniform buffers/desc set vector resources
         uniform_buffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -83,13 +83,12 @@ namespace VKChis {
         descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            uniform_buffers[i].reserve(2);
-            uniformBuffersMapped[i].resize(2);
-            descriptorSets[i].resize(2);
+            uniform_buffers[i].reserve(1);
+            uniformBuffersMapped[i].resize(1);
+            descriptorSets[i].resize(1);
         }
 
         VkDeviceSize camBufferSize = sizeof(CameraMatrixUBO);
-        VkDeviceSize modBufferSize = sizeof(ModelMatrixUBO);
 
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -114,12 +113,6 @@ namespace VKChis {
                                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                           result);
 
-            // Allocate Model Buffer
-            uniform_buffers[i].emplace_back(flags, device, modBufferSize,
-                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                            result);
-
             if (result) {
                 if (flags & VKC_ENABLE_VALIDATION_LAYER)
                     print_colored("/// WARN /// - Uniform Buffer allocation failed!", YELLOW);
@@ -128,7 +121,6 @@ namespace VKChis {
 
             // Persistent map memory
             result = vkMapMemory(device->device, uniform_buffers[i][0].bufferMemory, 0, camBufferSize, 0, &(uniformBuffersMapped[i][0]));
-            result = vkMapMemory(device->device, uniform_buffers[i][1].bufferMemory, 0, modBufferSize, 0, &(uniformBuffersMapped[i][1]));
 
             if (result) {
                 if (flags & VKC_ENABLE_VALIDATION_LAYER) print_colored("/// WARN /// - Failed to map persistent memory!", YELLOW);
@@ -157,43 +149,26 @@ namespace VKChis {
             camDescriptorWrite.pImageInfo = nullptr; // Optional
             camDescriptorWrite.pTexelBufferView = nullptr; // Optional
 
-            // MODEL buffer
-            VkDescriptorBufferInfo modBufferInfo{};
-            modBufferInfo.buffer = uniform_buffers[i][1].buffer;
-
-            modBufferInfo.offset = 0;
-            modBufferInfo.range = sizeof(ModelMatrixUBO);
-
-            VkWriteDescriptorSet modDescriptorWrite{};
-            modDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            modDescriptorWrite.dstSet = descriptorSets[i][1];
-            modDescriptorWrite.dstBinding = 0;
-            modDescriptorWrite.dstArrayElement = 0;
-
-            modDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            modDescriptorWrite.descriptorCount = 1;
-
-            modDescriptorWrite.pBufferInfo = &modBufferInfo;
-            modDescriptorWrite.pImageInfo = nullptr; // Optional
-            modDescriptorWrite.pTexelBufferView = nullptr; // Optional
-
             vector<VkWriteDescriptorSet> descriptorWrites;
             descriptorWrites.push_back(camDescriptorWrite);
-            descriptorWrites.push_back(modDescriptorWrite);
 
             // Write buffers
-            vkUpdateDescriptorSets(device->device, 2, descriptorWrites.data(), 0, nullptr);
+            vkUpdateDescriptorSets(device->device, 1, descriptorWrites.data(), 0, nullptr);
         }
     }
 
     VKCDescriptorManager::~VKCDescriptorManager() {
         bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
+        for (auto & descSetLayout : descSetLayouts)
+            vkDestroyDescriptorSetLayout(device->device, descSetLayout, nullptr);
+        if (enableValidation) print_colored("/// CLEAN /// - Destroyed Descriptor Set Layouts", CYAN);
+
         vkDestroyDescriptorPool(device->device, descriptorPool, nullptr);
         if (enableValidation) print_colored("/// CLEAN /// - Destroyed Descriptor Pool", CYAN);
     }
 
-    // Creates and allocates an arbitrary UBO to facilitate object abstracdtion
+    // Creates and allocates an arbitrary UBO to facilitate object abstraction
     // TODO: Generify binding index and buffer struct
     vkc_Result VKCDescriptorManager::AllocateObjectDescriptors() {
 
@@ -202,7 +177,6 @@ namespace VKChis {
 
     vkc_Result VKCDescriptorManager::UpdateUBOs(int currentFrame) {
         memcpy(uniformBuffersMapped[currentFrame][0], &cameraMatrix, sizeof(cameraMatrix));
-        memcpy(uniformBuffersMapped[currentFrame][1], &modelMatrix, sizeof(modelMatrix));
         return VKC_SUCCESS;
     }
 } // VKChis

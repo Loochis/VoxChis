@@ -17,7 +17,8 @@ namespace VKChis {
         glfwInit();
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);   // Tell GLFW not to create OpenGL context
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);     // Enable resizing
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);     // Enable resizing
+        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);     // Disable the bar on top
 
         window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 

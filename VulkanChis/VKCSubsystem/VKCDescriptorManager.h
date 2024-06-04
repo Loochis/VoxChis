@@ -36,7 +36,6 @@ namespace VKChis {
 
         // Modifiable Data
         CameraMatrixUBO cameraMatrix;
-        ModelMatrixUBO modelMatrix;
 
         // Read-only
         size_t dynamicAlignment;
