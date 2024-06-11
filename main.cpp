@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
-#include "VulkanChis/VKCDynamicComponents/WINChisInstance.h"
-#include "VulkanChis/VKCDynamicComponents/VKCManager.h"
+#include "VulkanChis/VKCVulkanComponents/WINChisInstance.h"
+#include "VulkanChis/VKCManager.h"
 #include <GLFW/glfw3.h>
 
 using namespace VKChis;

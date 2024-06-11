@@ -8,6 +8,7 @@ layout(location = 0) out vec4 outColor;
 layout(push_constant) uniform constants {
     mat4 m_mat;
     vec3 im_campos;
+    float sp_size;
 } p_const;
 
 void main() {
@@ -43,7 +44,7 @@ void main() {
 
     // Cast the ray
 
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 100; i++) {
         vec4 tempOutput = vec4(0,0,0,0);
         if (t_val_cur.x < t_val_cur.y && t_val_cur.x < t_val_cur.z) {
             if (verDir.x < 0)   curCell.x++;
@@ -79,12 +80,12 @@ void main() {
             t_val_cur.z = t_val_max.z;
         }
 
-        if (curCell.z < (sin((curCell.x + 1) / 5.0) + 1)*5.0 - 5) {
+        if (length(curCell) < p_const.sp_size) {
             norm = vec3(p_const.m_mat * tempOutput);
             //norm = vec3(p_const.mvp_mat * tempOutput);
 
             float brightness = 0.1 + clamp(dot(norm, normalize(vec3(-3, 0, 1))), 0.0, 1.0);
-            outColor = vec4(curCell / 5.0, 1) * vec4(brightness, brightness, brightness, 1);
+            outColor = vec4(brightness, brightness, brightness, 1);
             //outColor = vec4(abs(norm), 1.0);
 
             break;
