@@ -21,7 +21,7 @@ namespace VKChis {
     VKCSurface::~VKCSurface() {
         bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
-        vkDestroySurfaceKHR(instance, surface, nullptr);
+        //vkDestroySurfaceKHR(instance, surface, nullptr);
         if (enableValidation) print_colored("/// CLEAN /// - Destroyed Surface", CYAN);
     }
 } // VKChis

@@ -9,7 +9,8 @@
 
 enum vkc_InitFlags : uint32_t {
         VKC_ENABLE_VALIDATION_LAYER = 1 << 0,
-        VKC_DISPLAY_GPU_INFO        = 1 << 1
+        VKC_DISPLAY_GPU_INFO        = 1 << 1,
+        VKC_ASSET_LOAD_DEBUG        = 1 << 2
 };
 
 enum vkc_Result : uint32_t {

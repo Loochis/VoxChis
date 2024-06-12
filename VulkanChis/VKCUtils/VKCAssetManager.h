@@ -6,8 +6,37 @@
 #define VOXCHIS_VKCASSETMANAGER_H
 
 
-class VKCAssetManager {
+#include <vulkan/vulkan.h>
+#include "../VKCVulkanComponents/VKCBuffer.h"
+#include "../VKCVulkanComponents/VKCCommandManager.h"
 
+using namespace VKChis;
+
+class VKCAssetManager {
+public:
+    // test vars
+    VkImage textureImage;
+    VkDeviceMemory textureImageMemory;
+    VkImageView textureImageView;
+    VkSampler textureSampler;
+
+    VKCAssetManager(uint32_t in_flags,
+                    shared_ptr<VKCDevice> &in_device,
+                    shared_ptr<VKCCommandManager> &in_commandManager);
+
+    ~VKCAssetManager();
+
+    VkResult AddModel();
+    VkResult AddPalette();
+private:
+    uint32_t flags;
+    shared_ptr<VKCDevice> device;
+    shared_ptr<VKCCommandManager> commandManager;
+
+    unique_ptr<VKCBuffer> staging_buffer;
+
+    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t depth);
 };
 
 

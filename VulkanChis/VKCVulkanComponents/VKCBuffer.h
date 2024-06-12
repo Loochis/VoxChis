@@ -25,11 +25,11 @@ namespace VKChis {
                   VkResult &result);
 
         ~VKCBuffer();
+
+        static uint32_t findMemoryType(shared_ptr<VKCDevice> &in_device, uint32_t typeFilter, VkMemoryPropertyFlags properties);
     private:
         uint32_t flags;
         shared_ptr<VKCDevice> device;
-
-        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     };
 
 } // VKChis

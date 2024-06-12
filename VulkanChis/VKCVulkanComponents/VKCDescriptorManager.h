@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.h>
 #include "VKCDevice.h"
 #include "VKCBuffer.h"
+#include "../VKCUtils/VKCAssetManager.h"
 
 using namespace std;
 
@@ -17,13 +18,13 @@ namespace VKChis {
     public:
         VkDescriptorPool descriptorPool;
 
-        vector<VkDescriptorSetLayout> descSetLayouts;
+        VkDescriptorSetLayout descSetLayout;
 
-        vector<vector<VkDescriptorSet>> descriptorSets;
-        vector<vector<VKCBuffer>> uniform_buffers;
-        vector<vector<void*>> uniformBuffersMapped; // Persistent mapped buffer vec
+        vector<VkDescriptorSet> descriptorSets;
+        vector<VKCBuffer> uniform_buffers;
+        vector<void*> uniformBuffersMapped; // Persistent mapped buffer vec
 
-        VKCDescriptorManager(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, int in_MAX_FRAMES_IN_FLIGHT, VkResult &result);
+        VKCDescriptorManager(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, shared_ptr<VKCAssetManager> &in_assetManager, int in_MAX_FRAMES_IN_FLIGHT, VkResult &result);
         ~VKCDescriptorManager();
 
         vkc_Result UpdateUBOs(int currentFrame);
@@ -43,6 +44,7 @@ namespace VKChis {
         uint32_t flags;
 
         shared_ptr<VKCDevice> device;
+        shared_ptr<VKCAssetManager> assetManager;
         int MAX_FRAMES_IN_FLIGHT;
     };
 

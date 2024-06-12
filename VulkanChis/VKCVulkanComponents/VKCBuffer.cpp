@@ -36,7 +36,7 @@ namespace VKChis {
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+        allocInfo.memoryTypeIndex = findMemoryType(device, memRequirements.memoryTypeBits, properties);
 
         result = vkAllocateMemory(device->device, &allocInfo, nullptr, &bufferMemory);
         if (result) {
@@ -51,9 +51,9 @@ namespace VKChis {
         }
     }
 
-    uint32_t VKCBuffer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    uint32_t VKCBuffer::findMemoryType(shared_ptr<VKCDevice> &in_device, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
         VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(device->physicalDevice, &memProperties);
+        vkGetPhysicalDeviceMemoryProperties(in_device->physicalDevice, &memProperties);
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
             if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {

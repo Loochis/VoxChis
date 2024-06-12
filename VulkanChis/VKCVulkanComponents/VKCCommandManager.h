@@ -20,8 +20,10 @@ namespace VKChis {
     public:
         VkCommandPool commandPool;
         vector<VkCommandBuffer> commandBuffers;
+        VkCommandBuffer commandBuffer_single;
 
-        void CMD_CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+        VkResult SingleCommandBuffer_Start();
+        VkResult SingleCommandBuffer_End();
 
         VKCCommandManager(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, int in_MAX_FRAMES_IN_FLIGHT, VkResult &result);
         ~VKCCommandManager();

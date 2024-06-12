@@ -47,12 +47,12 @@ namespace VKChis {
         VkResult result;
 
         // Initialize instance
-        instance = std::make_unique<VKCInstance>(flags, validationLayers, result);
+        instance = std::make_shared<VKCInstance>(flags, validationLayers, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// - Failed to create VKInstance");
         if (enableValidation)  print_colored("/// GOOD /// - Created VKInstance", GREEN);
 
         // Initialize Surface
-        surface = std::make_unique<VKCSurface>(flags, instance->instance, window->window, result);
+        surface = std::make_shared<VKCSurface>(flags, instance->instance, window->window, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// - Failed to create Surface!");
         if (enableValidation)  print_colored("/// GOOD /// - Created VKSurfaceKHR", GREEN);
 
@@ -62,17 +62,9 @@ namespace VKChis {
         if (enableValidation)  print_colored("/// GOOD /// - Created Logical Device", GREEN);
 
         // Create Swap Chain
-        swapChain = std::make_unique<VKCSwapChain>(flags, surface->surface, device, window->window, result);
+        swapChain = std::make_shared<VKCSwapChain>(flags, surface->surface, device, window->window, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create SwapChain!");
         if (enableValidation)  print_colored("/// GOOD /// - Created SwapChain", GREEN);
-
-        // imgui testing
-        imgui_wd.Surface = surface->surface;
-        imgui_wd.SurfaceFormat = swapChain->surfaceFormat;
-        imgui_wd.PresentMode = swapChain->presentMode;
-        imgui_wd.ClearEnable = false;
-
-        ImGui_ImplVulkanH_CreateOrResizeWindow(instance->instance, device->physicalDevice, device->device, &imgui_wd, device->indices.graphicsFamily.value(), nullptr, window->width, window->height, imgui_imgcount);
 
         // Create Render Pass
         renderPass = std::make_unique<VKCRenderPass>(flags, device, swapChain->swapChainImageFormat, result);
@@ -82,8 +74,18 @@ namespace VKChis {
         // Create Framebuffer
         swapChain->createFrameBuffers(renderPass->renderPass);
 
+        // Create Command Pool
+        commandManager = make_shared<VKCCommandManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
+        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Command Manager!");
+        if (enableValidation)  print_colored("/// GOOD /// - Created Command Manager", GREEN);
+
+        // Asset Manager
+        // Load assets
+        assetManager = make_shared<VKCAssetManager>(flags, device, commandManager);
+        assetManager->AddModel();
+
         // Create Descriptors
-        descriptorManager = make_shared<VKCDescriptorManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
+        descriptorManager = make_shared<VKCDescriptorManager>(flags, device, assetManager, MAX_FRAMES_IN_FLIGHT, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Descriptor Pool/Set!");
         if (enableValidation)  print_colored("/// GOOD /// - Created Descriptor Pool and Set", GREEN);
 
@@ -108,12 +110,6 @@ namespace VKChis {
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create GFX Pipeline!");
         if (enableValidation)  print_colored("/// GOOD /// - Created GFX Pipeline", GREEN);
 
-        // Create Command Pool
-
-        commandManager = make_unique<VKCCommandManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
-        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Command Manager!");
-        if (enableValidation)  print_colored("/// GOOD /// - Created Command Manager", GREEN);
-
         // VERTEX BUFFER
 
         VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
@@ -132,7 +128,15 @@ namespace VKChis {
                                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, result);
 
         // copy buf
-        commandManager->CMD_CopyBuffer(stage_buffer->buffer, vert_buffer->buffer, bufferSize);
+        commandManager->SingleCommandBuffer_Start();
+
+        VkBufferCopy copyRegion{};
+        copyRegion.srcOffset = 0; // Optional
+        copyRegion.dstOffset = 0; // Optional
+        copyRegion.size = bufferSize;
+        vkCmdCopyBuffer(commandManager->commandBuffer_single, stage_buffer->buffer, vert_buffer->buffer, 1, &copyRegion);
+
+        commandManager->SingleCommandBuffer_End();
 
         // END VERTEX BUFFER
 
@@ -154,7 +158,14 @@ namespace VKChis {
                                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, result);
 
         // copy buf
-        commandManager->CMD_CopyBuffer(stage_buffer->buffer, ind_buffer->buffer, bufferSize);
+        commandManager->SingleCommandBuffer_Start();
+
+        copyRegion.srcOffset = 0; // Optional
+        copyRegion.dstOffset = 0; // Optional
+        copyRegion.size = bufferSize;
+        vkCmdCopyBuffer(commandManager->commandBuffer_single, stage_buffer->buffer, ind_buffer->buffer, 1, &copyRegion);
+
+        commandManager->SingleCommandBuffer_End();
 
         stage_buffer.reset();
 
@@ -173,35 +184,7 @@ namespace VKChis {
 
         // DO IMGUI STUFF
 
-        // Setup Dear ImGui context
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO(); (void)io;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-        // Setup Dear ImGui style
-        ImGui::StyleColorsDark();
-        //ImGui::StyleColorsLight();
-
-        // Setup Platform/Renderer backends
-        ImGui_ImplGlfw_InitForVulkan(window->window, true);
-        ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance = instance->instance;
-        init_info.PhysicalDevice = device->physicalDevice;
-        init_info.Device = device->device;
-        init_info.QueueFamily = device->indices.graphicsFamily.value();
-        init_info.Queue = device->graphicsQueue;
-        init_info.PipelineCache = VK_NULL_HANDLE;
-        init_info.DescriptorPool = descriptorManager->descriptorPool;
-        init_info.RenderPass = imgui_wd.RenderPass;
-        init_info.Subpass = 0;
-        init_info.MinImageCount = imgui_imgcount;
-        init_info.ImageCount = imgui_wd.ImageCount;
-        init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        init_info.Allocator = nullptr;
-        //init_info.CheckVkResultFn = check_vk_result;
-        ImGui_ImplVulkan_Init(&init_info);
+        userInterface = make_unique<VKCUserInterface>(device, instance, swapChain, surface, window, descriptorManager);
 
         // Create stats instance
 
@@ -229,9 +212,6 @@ namespace VKChis {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        // Get the IMGUI frame
-        //ImGui_ImplVulkanH_Frame* fd = &imgui_wd.Frames[imgui_wd.FrameIndex];
-
         // Update the UBO
         updateUniformBuffer(currentFrame);
 
@@ -240,14 +220,8 @@ namespace VKChis {
 
         // Draw some stuff with IMGUI
 
-        // Set the clear value
-        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 0.10f);
-        imgui_wd.ClearValue.color.float32[0] = clear_color.x * clear_color.w;
-        imgui_wd.ClearValue.color.float32[1] = clear_color.y * clear_color.w;
-        imgui_wd.ClearValue.color.float32[2] = clear_color.z * clear_color.w;
-        imgui_wd.ClearValue.color.float32[3] = clear_color.w;
-
         // Start the Dear ImGui frame
+
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -259,11 +233,12 @@ namespace VKChis {
         ImGui::Text("FrameTime (µS): %.1f", stats->roll_frametime);               // Display some text (you can use a format strings too)
         //ImGui::PlotLines("FrameTimes", samples, 100, 900);
 
-        ImGui::SliderFloat("float", &testslider, 10.0f, 12.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat("float", &testslider, 0.0f, 24.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
         ImGui::End();
 
         ImGui::Render();
         ImDrawData* draw_data = ImGui::GetDrawData();
+
 
         vkResetCommandBuffer(commandManager->commandBuffers[currentFrame],  0);
         RecordCommandBuffer(commandManager->commandBuffers[currentFrame], imageIndex, draw_data);
@@ -393,7 +368,7 @@ namespace VKChis {
         glm::vec3 camPos;
 
         // bind global consts
-        vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout, 0, 1, descriptorManager->descriptorSets[currentFrame].data(), 0,
+        vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout, 0, 1, &(descriptorManager->descriptorSets[currentFrame]), 0,
                                 nullptr);
 
         camPos = glm::vec3(glm::inverse(obj1Mat) * glm::vec4(0, 5, 5, 1));
@@ -422,12 +397,12 @@ namespace VKChis {
 
         VkRenderPassBeginInfo guiPassInfo = {};
         guiPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        guiPassInfo.renderPass = imgui_wd.RenderPass;
+        guiPassInfo.renderPass = userInterface->imgui_wd.RenderPass;
         guiPassInfo.framebuffer = swapChain->swapChainFramebuffers[imageIndex];
         guiPassInfo.renderArea.offset = {0, 0};
         guiPassInfo.renderArea.extent = swapChain->swapChainExtent;
         guiPassInfo.clearValueCount = 1;
-        guiPassInfo.pClearValues = &imgui_wd.ClearValue;
+        guiPassInfo.pClearValues = &(userInterface->imgui_wd.ClearValue);
 
         vkCmdBeginRenderPass(commandBufferIn, &guiPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -435,6 +410,7 @@ namespace VKChis {
         ImGui_ImplVulkan_RenderDrawData(draw_data, commandBufferIn);
 
         vkCmdEndRenderPass(commandBufferIn);
+
 
         if (vkEndCommandBuffer(commandBufferIn) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");
@@ -469,8 +445,5 @@ namespace VKChis {
     VKCManager::~VKCManager() {
         // Wait for device to be idle before destroying
         vkDeviceWaitIdle(device->device);
-
-        // Destroy the imgui instance
-        ImGui_ImplVulkanH_DestroyWindow(instance->instance, device->device, &imgui_wd, nullptr);
     }
 } // VKChis

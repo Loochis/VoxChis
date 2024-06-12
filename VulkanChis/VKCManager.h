@@ -31,6 +31,8 @@
 #include "../imgui/imgui.h"
 #include "../imgui/backends/imgui_impl_glfw.h"
 #include "../imgui/backends/imgui_impl_vulkan.h"
+#include "VKCUtils/VKCAssetManager.h"
+#include "VKCUtils/VKCUserInterface.h"
 
 using namespace std;
 
@@ -57,10 +59,10 @@ namespace VKChis {
 
         uint32_t flags;
         shared_ptr<WINChisInstance> window;
-        unique_ptr<VKCInstance> instance;
-        unique_ptr<VKCSurface> surface;
+        shared_ptr<VKCInstance> instance;
+        shared_ptr<VKCSurface> surface;
         shared_ptr<VKCDevice> device; // SHARED
-        unique_ptr<VKCSwapChain> swapChain;
+        shared_ptr<VKCSwapChain> swapChain;
         unique_ptr<VKCRenderPass> renderPass;
 
         shared_ptr<VKCDescriptorManager> descriptorManager;
@@ -68,22 +70,25 @@ namespace VKChis {
         shared_ptr<vector<VKCShaderModule>> shader_modules;
         unique_ptr<VKCGraphicsPipeline> graphicsPipeline;
 
-        unique_ptr<VKCCommandManager> commandManager;
+        shared_ptr<VKCCommandManager> commandManager;
         shared_ptr<vector<VKCSyncObjects>> sync_objects;
 
         unique_ptr<VKCBuffer> vert_buffer;
         unique_ptr<VKCBuffer> ind_buffer;
 
+        unique_ptr<VKCUserInterface> userInterface;
+
         // imgui testing
-        ImGui_ImplVulkanH_Window imgui_wd;
-        int                      imgui_imgcount = 2;
-        float testslider = 10;
+        float testslider = 0;
 
         int currentFrame = 0;
 
         // statistics!
         // some bigger arrays here, store 'em on the heap
         unique_ptr<VKCStatistics> stats;
+
+        // Asset management
+        shared_ptr<VKCAssetManager> assetManager;
 
         void RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex, ImDrawData* draw_data);
         void RecreateSwapChain();

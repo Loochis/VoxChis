@@ -51,8 +51,9 @@ namespace VKChis {
         if (enableValidation) print_colored("/// CLEAN /// - Destroyed Command Pool", CYAN);
     }
 
-    // Copies one buffer to another
-    void VKCCommandManager::CMD_CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+    VkResult VKCCommandManager::SingleCommandBuffer_Start() {
+        VkResult result;
+
         // Alloc info
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -61,34 +62,35 @@ namespace VKChis {
         allocInfo.commandBufferCount = 1;
 
         // Create the buffer
-        VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(device->device, &allocInfo, &commandBuffer);
+        vkAllocateCommandBuffers(device->device, &allocInfo, &commandBuffer_single);
 
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+        vkBeginCommandBuffer(commandBuffer_single, &beginInfo);
 
-        VkBufferCopy copyRegion{};
-        copyRegion.srcOffset = 0; // Optional
-        copyRegion.dstOffset = 0; // Optional
-        copyRegion.size = size;
-        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+        return result;
+    }
 
-        vkEndCommandBuffer(commandBuffer);
+    VkResult VKCCommandManager::SingleCommandBuffer_End() {
+        VkResult result;
+
+        vkEndCommandBuffer(commandBuffer_single);
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
+        submitInfo.pCommandBuffers = &commandBuffer_single;
 
         vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 
         // wait for idle instead of using a fence, if doing this multiple times consecutively use a fence instead
         vkQueueWaitIdle(device->graphicsQueue);
 
-        vkFreeCommandBuffers(device->device, commandPool, 1, &commandBuffer);
+        vkFreeCommandBuffers(device->device, commandPool, 1, &commandBuffer_single);
+
+        return result;
     }
 
 } // VKChis

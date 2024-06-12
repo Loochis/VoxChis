@@ -150,8 +150,8 @@ namespace VKChis {
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = descSetManager->descSetLayouts.size();
-        pipelineLayoutInfo.pSetLayouts = descSetManager->descSetLayouts.data();
+        pipelineLayoutInfo.setLayoutCount = 1;
+        pipelineLayoutInfo.pSetLayouts = &(descSetManager->descSetLayout);
         //pipelineLayoutInfo.setLayoutCount = 0;
         //pipelineLayoutInfo.pSetLayouts = nullptr;
         pipelineLayoutInfo.pushConstantRangeCount = 1; // Optional

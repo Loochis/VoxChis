@@ -11,6 +11,8 @@ layout(push_constant) uniform constants {
     float sp_size;
 } p_const;
 
+layout(binding = 1) uniform usampler3D texSampler;
+
 void main() {
 
     outColor = vec4(0);
@@ -31,11 +33,15 @@ void main() {
     if (verDir.z < 0) dists.z = 1 - dists.z;
 
     if (dists.x == 0) dists.x = 1;
-    else if (dists.x == 1) dists.x = 0;
+    else if (dists.x >= 1) dists.x = 0;
     if (dists.y == 0) dists.y = 1;
-    else if (dists.y == 1) dists.y = 0;
+    else if (dists.y >= 1) dists.y = 0;
     if (dists.z == 0) dists.z = 1;
-    else if (dists.z == 1) dists.z = 0;
+    else if (dists.z >= 1) dists.z = 0;
+
+    if (curPos.x >= 9.999) {dists.x = 0; curCell.x++; };
+    if (curPos.y >= 9.999) {dists.y = 0; curCell.y++; };
+    if (curPos.z >= 9.999) {dists.z = 0; curCell.z++; };
 
     vec3 t_val_cur = dists / abs(verDir);
 
@@ -80,7 +86,10 @@ void main() {
             t_val_cur.z = t_val_max.z;
         }
 
-        if (length(curCell) < p_const.sp_size) {
+        if (curCell.x >=  11 || curCell.y >=  11 || curCell.z >=  11) break;
+        if (curCell.x <= -10 || curCell.y <= -10 || curCell.z <= -10) break;
+
+        if (textureLod(texSampler, curCell/10.0, 0).x >= p_const.sp_size) {
             norm = vec3(p_const.m_mat * tempOutput);
             //norm = vec3(p_const.mvp_mat * tempOutput);
 
