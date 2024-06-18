@@ -133,7 +133,7 @@ namespace VKChis {
             // SAMPLER buffer
             VkDescriptorImageInfo samplerInfo{};
             samplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            samplerInfo.imageView = assetManager->textureImageView;
+            samplerInfo.imageView = assetManager->textureImage->imageView;
             samplerInfo.sampler = assetManager->textureSampler;
 
             VkWriteDescriptorSet uboDescriptorWrite{};

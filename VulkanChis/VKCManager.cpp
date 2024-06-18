@@ -4,6 +4,7 @@
 
 #include "VKCManager.h"
 #include "Headers/ColorMessages.h"
+#include "Headers/VKCMath.h"
 
 #include <memory>
 #include <utility>
@@ -14,14 +15,14 @@ using namespace std;
 namespace VKChis {
 
     const std::vector<Vertex> vertices = {
-            {{ 1.0f, -1.0f, -1.0f}},
-            {{ 1.0f, -1.0f,  1.0f}},
-            {{-1.0f, -1.0f,  1.0f}},
-            {{-1.0f, -1.0f, -1.0f}},
-            {{ 1.0f,  1.0f, -1.0f}},
-            {{ 1.0f,  1.0f,  1.0f}},
-            {{-1.0f,  1.0f,  1.0f}},
-            {{-1.0f,  1.0f, -1.0f}}
+            {{ 0.5f, -0.5f, -0.5f}},
+            {{ 0.5f, -0.5f,  0.5f}},
+            {{-0.5f, -0.5f,  0.5f}},
+            {{-0.5f, -0.5f, -0.5f}},
+            {{ 0.5f,  0.5f, -0.5f}},
+            {{ 0.5f,  0.5f,  0.5f}},
+            {{-0.5f,  0.5f,  0.5f}},
+            {{-0.5f,  0.5f, -0.5f}}
     };
 
     const std::vector<uint16_t> indices = {
@@ -39,8 +40,8 @@ namespace VKChis {
             4, 0, 7
     };
 
-    VKCManager::VKCManager(std::shared_ptr<WINChisInstance> in_window, uint32_t in_flags)
-    : window(std::move(in_window)), flags(in_flags)
+    VKCManager::VKCManager(std::shared_ptr<WINChisInstance> &in_window, uint32_t in_flags)
+    : window(in_window), flags(in_flags)
     {
         bool enableValidation = flags & VKC_ENABLE_VALIDATION_LAYER;
 
@@ -190,6 +191,10 @@ namespace VKChis {
 
         stats = make_unique<VKCStatistics>();
 
+        // setup objects
+        objMats.resize(numObjs);
+        objMatsInv.resize(numObjs);
+
         // DONE //
         if (enableValidation) print_colored("\n/// DONE INITIALIZATION ///\n", MAGENTA);
     }
@@ -213,7 +218,8 @@ namespace VKChis {
         }
 
         // Update the UBO
-        updateUniformBuffer(currentFrame);
+        if (imageIndex == 0)
+            updateUniformBuffer(currentFrame);
 
         // Only reset the fence if we are submitting work
         vkResetFences(device->device, 1, &((*sync_objects)[currentFrame].inFlightFence));
@@ -231,9 +237,9 @@ namespace VKChis {
 
         ImGui::Begin("Basic Stats");                          // Create a window called "Hello, world!" and append into it.
         ImGui::Text("FrameTime (µS): %.1f", stats->roll_frametime);               // Display some text (you can use a format strings too)
-        //ImGui::PlotLines("FrameTimes", samples, 100, 900);
+        ImGui::PlotLines("FrameTimes", samples, 100, 0);
 
-        ImGui::SliderFloat("float", &testslider, 0.0f, 24.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat("float", &testslider, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
         ImGui::End();
 
         ImGui::Render();
@@ -303,12 +309,22 @@ namespace VKChis {
         obj1Mat = glm::translate(glm::mat4(1.0f), glm::vec3(2, 0, 0));
         obj1Mat = glm::rotate(obj1Mat, time * glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
         obj1Mat = glm::rotate(obj1Mat, time * glm::radians(32.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-        obj1Mat = glm::scale(obj1Mat, glm::vec3(1.0f, 1.0f, 1.0f));
+        obj1Mat = glm::scale(obj1Mat, glm::vec3(0.1f, 0.1f, 0.1f));
+
+        for (int i = 0; i < numObjs; i++) {
+            float tval = (float)i/(float)numObjs;
+            objMats[i] = glm::translate(glm::mat4(1.0f), glm::vec3(lerp(0,2,tval), 0, 0));
+            objMats[i] = glm::rotate(objMats[i], time * glm::radians(lerp(45,90,tval)), glm::vec3(0.0f, 0.0f, 1.0f));
+            objMats[i] = glm::rotate(objMats[i], time * glm::radians(lerp(20,32,tval)), glm::vec3(0.0f, 1.0f, 0.0f));
+            objMats[i] = glm::scale(objMats[i], glm::vec3(0.1f, 0.1f, 0.1f));
+            objMatsInv[i] = glm::inverse(objMats[i]);
+        }
 
 
         //obj1Mat = projMat * viewMat * obj1Mat;
         obj2Mat = glm::translate(glm::mat4(1.0f), glm::vec3(-2, 0, 0));
-        obj2Mat = glm::rotate(obj2Mat, time * glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        obj2Mat = glm::rotate(obj2Mat, glm::radians(testslider), glm::vec3(0.0f, 0.0f, 1.0f));
+        obj2Mat = glm::scale(obj2Mat, glm::vec3(0.10f, 0.10f, 0.10f));
 
         descriptorManager->cameraMatrix.vp_mat = projMat * viewMat;
         descriptorManager->UpdateUBOs(currentImage);
@@ -371,18 +387,20 @@ namespace VKChis {
         vkCmdBindDescriptorSets(commandBufferIn, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->pipelineLayout, 0, 1, &(descriptorManager->descriptorSets[currentFrame]), 0,
                                 nullptr);
 
-        camPos = glm::vec3(glm::inverse(obj1Mat) * glm::vec4(0, 5, 5, 1));
-        pushConstData.m_mat = obj1Mat;
-        pushConstData.im_campos = camPos;
-        pushConstData.sp_size = testslider;
+        for (int i = 0; i < numObjs; i++) {
+            camPos = glm::vec3(objMatsInv[i] * glm::vec4(0, 5, 5, 1));
+            pushConstData.m_mat = objMats[i];
+            pushConstData.im_campos = camPos;
+            pushConstData.sp_size = testslider;
 
-        // draw object 1
-        vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout,
-                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstData),
-                           &pushConstData);
-        for (int i = 0; i < 1; i++) {
+            // draw object 1
+            vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout,
+                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstData),
+                               &pushConstData);
+
             vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(36), 1, 0, 0, 0);
         }
+
         camPos = glm::vec3(glm::inverse(obj2Mat) * glm::vec4(0, 5, 5, 1));
         pushConstData.m_mat = obj2Mat;
         pushConstData.im_campos = camPos;
@@ -418,6 +436,7 @@ namespace VKChis {
     }
 
     void VKCManager::RecreateSwapChain() {
+
         // Wait for device idle
         vkDeviceWaitIdle(device->device);
 

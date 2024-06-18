@@ -9,15 +9,15 @@
 #include <vulkan/vulkan.h>
 #include "../VKCVulkanComponents/VKCBuffer.h"
 #include "../VKCVulkanComponents/VKCCommandManager.h"
+#include "../VKCUtils/VKCAssetLoader.h"
+#include "../VKCVulkanComponents/VKCImage.h"
 
 using namespace VKChis;
 
 class VKCAssetManager {
 public:
     // test vars
-    VkImage textureImage;
-    VkDeviceMemory textureImageMemory;
-    VkImageView textureImageView;
+    shared_ptr<VKCImage> textureImage;
     VkSampler textureSampler;
 
     VKCAssetManager(uint32_t in_flags,
@@ -34,6 +34,7 @@ private:
     shared_ptr<VKCCommandManager> commandManager;
 
     unique_ptr<VKCBuffer> staging_buffer;
+    unique_ptr<VKCAssetLoader> loader;
 
     void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t depth);

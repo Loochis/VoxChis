@@ -23,6 +23,8 @@
 
 #include "VKCUtils/VKCStatistics.h"
 
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
@@ -45,6 +47,10 @@ namespace VKChis {
         glm::mat4 viewMat;
         glm::mat4 obj1Mat;
         glm::mat4 obj2Mat;
+
+        vector<glm::mat4> objMats;
+        vector<glm::mat4> objMatsInv;
+        int numObjs = 50;
 
         // CONST vals,
         const std::vector<const char*> deviceExtensions = {
@@ -93,7 +99,7 @@ namespace VKChis {
         void RecordCommandBuffer(VkCommandBuffer commandBufferIn, uint32_t imageIndex, ImDrawData* draw_data);
         void RecreateSwapChain();
     public:
-        VKCManager(std::shared_ptr<WINChisInstance> in_window, uint32_t in_flags);
+        VKCManager(std::shared_ptr<WINChisInstance> &in_window, uint32_t in_flags);
         ~VKCManager();
 
         // Ohh boy this is where it gets complicated

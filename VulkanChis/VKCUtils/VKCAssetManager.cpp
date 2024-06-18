@@ -16,17 +16,19 @@ VKCAssetManager::VKCAssetManager(uint32_t in_flags, shared_ptr<VKCDevice> &in_de
 
 VKCAssetManager::~VKCAssetManager() {
     vkDestroySampler(device->device, textureSampler, nullptr);
-    vkDestroyImageView(device->device, textureImageView, nullptr);
-
-    vkDestroyImage(device->device, textureImage, nullptr);
-    vkFreeMemory(device->device, textureImageMemory, nullptr);
 }
 
 VkResult VKCAssetManager::AddModel() {
 
     VkResult result;
 
-    VkDeviceSize imageSize = 8*8*8;
+    // Load the file
+    loader = make_unique<VKCAssetLoader>(flags);
+    string vox_dir = "/home/loochis/CLionProjects/VoxChis/Assets/Vox/chr_knight.vox";
+    loader->LoadVOX(vox_dir);
+
+    VkDeviceSize imageSize = loader->dimensions[0]*loader->dimensions[1]*loader->dimensions[2];
+
     staging_buffer = make_unique<VKCBuffer>(imageSize, device, imageSize,
                                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, result);
     if (result) {
@@ -34,86 +36,25 @@ VkResult VKCAssetManager::AddModel() {
         return result;
     }
 
-    // TEST IMAGE
-    uint8_t pixels[8*8*8];
-    int ctr = 0;
-    for (int x = 0; x < 8; x++) {
-        for (int y = 0; y < 8; y++) {
-            for (int z = 0; z < 8; z++) {
-                pixels[ctr] = x+y+z;
-                ctr++;
-            }
-        }
-    }
-
     // Copy the pixels into the staging buffer
     void* data;
     vkMapMemory(device->device, staging_buffer->bufferMemory, 0, imageSize, 0, &data);
-    memcpy(data, pixels, static_cast<size_t>(imageSize));
+    memcpy(data, loader->voxel_data.data(), static_cast<size_t>(imageSize));
     vkUnmapMemory(device->device, staging_buffer->bufferMemory);
 
-    // image definition
-    VkImageCreateInfo imageInfo{};
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.imageType = VK_IMAGE_TYPE_3D;
-    imageInfo.extent.width = 8;
-    imageInfo.extent.height = 8;
-    imageInfo.extent.depth = 8;
-    imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 1;
-
-    imageInfo.format = VK_FORMAT_R8_UINT; // ohh yeah
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.flags = 0; // TODO: Use this for sparse textures
-
-    // create the image
-    if (vkCreateImage(device->device, &imageInfo, nullptr, &textureImage) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create image!");
-    }
-
-    VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(device->device, textureImage, &memRequirements);
-
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = VKCBuffer::findMemoryType(device, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    if (vkAllocateMemory(device->device, &allocInfo, nullptr, &textureImageMemory) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate image memory!");
-    }
+    textureImage = make_shared<VKCImage>(flags, device,
+                                         loader->dimensions[0], loader->dimensions[1], loader->dimensions[2],
+                                         VK_FORMAT_R8_UINT, VK_IMAGE_ASPECT_COLOR_BIT);
 
 
-    vkBindImageMemory(device->device, textureImage, textureImageMemory, 0);
-
-    transitionImageLayout(textureImage, VK_FORMAT_R8_UINT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyBufferToImage(staging_buffer->buffer, textureImage, 8, 8, 8);
+    transitionImageLayout(textureImage->image, VK_FORMAT_R8_UINT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    copyBufferToImage(staging_buffer->buffer, textureImage->image, loader->dimensions[0], loader->dimensions[1], loader->dimensions[2]);
 
     // another transition for shader read optimisation
-    transitionImageLayout(textureImage, VK_FORMAT_R8_UINT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    transitionImageLayout(textureImage->image, VK_FORMAT_R8_UINT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     // destroy the staging buffer
     staging_buffer.reset();
-
-    // CREATE THE IMAGE VIEW
-    VkImageViewCreateInfo viewInfo{};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = textureImage;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_3D;
-    viewInfo.format = VK_FORMAT_R8_UINT;
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-
-    if (vkCreateImageView(device->device, &viewInfo, nullptr, &textureImageView) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create texture image view!");
-    }
 
     // CREATE THE SAMPLER
     VkSamplerCreateInfo samplerInfo{};

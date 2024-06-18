@@ -17,10 +17,15 @@ layout(set = 0, binding = 0) uniform CameraUBOObject {
 } camUBO;
 
 void main() {
+
+    // TODO: Cache these in a UBO/PC?? They don't change after object instantiation!
+    vec3 dimensions = vec3(20.0, 21.0, 20.0);
+
     //gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 0.0, 1.0);
 
-    gl_Position = camUBO.vp_mat * p_const.m_mat * vec4(inPosition, 1.0);// + gl_InstanceIndex * vec4(-5, 0, 0, 0);
     verPos = vec4(inPosition, 1.0);
+    verDir = p_const.im_campos - inPosition*dimensions;
 
-    verDir = p_const.im_campos - vec3(verPos);
+    gl_Position = camUBO.vp_mat * p_const.m_mat * vec4(inPosition*dimensions, 1.0);// + gl_InstanceIndex * vec4(-5, 0, 0, 0);
+
 }

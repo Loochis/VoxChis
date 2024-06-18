@@ -17,10 +17,19 @@ namespace VKChis {
         glfwInit();
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);   // Tell GLFW not to create OpenGL context
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);     // Enable resizing
+        glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);     // Enable resizing
+        //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);     // Disable the bar on top
 
         window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+        int *t,*b,*l,*r;
+        glfwGetWindowFrameSize(window, l,t,r,b);
+        std::cout << t;
+
+        const char* desc;
+        int error = glfwGetError(&desc);
+        printf("GLFW error: %d, %s\n", error, desc);
 
         if (window == nullptr)  throw std::runtime_error("/// FATAL ERROR /// - Failed to create Window!");
         if (enableValidation)              print_colored("/// GOOD /// - Created Window", GREEN);

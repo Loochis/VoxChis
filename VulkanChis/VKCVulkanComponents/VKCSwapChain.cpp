@@ -26,6 +26,10 @@ namespace VKChis {
         presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
         VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+        std::cout << width << ", " << height;
+
         uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 
         if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
@@ -106,6 +110,11 @@ namespace VKChis {
         } else {
             int width, height;
             glfwGetFramebufferSize(window, &width, &height);
+            const char* desc;
+            int error = glfwGetError(&desc);
+            printf("GLFW error: %d, %s\n", error, desc);
+
+            std::cout << width << " " << height << "\n";
 
             VkExtent2D actualExtent = {
                     static_cast<uint32_t>(width),
@@ -157,7 +166,7 @@ namespace VKChis {
         swapChainFramebuffers.resize(swapChainImageViews.size());
 
         for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-            VkImageView attachments[] = {
+            vector<VkImageView> attachments = {
                     swapChainImageViews[i]
             };
 
@@ -165,7 +174,7 @@ namespace VKChis {
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = renderPass;
             framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = attachments;
+            framebufferInfo.pAttachments = attachments.data();
             framebufferInfo.width = swapChainExtent.width;
             framebufferInfo.height = swapChainExtent.height;
             framebufferInfo.layers = 1;
