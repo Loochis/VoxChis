@@ -2,6 +2,7 @@
 
 layout(location = 0) in vec4 verPos;
 layout(location = 1) in vec3 verDir;
+layout(depth_greater) out float gl_FragDepth;
 
 layout(location = 0) out vec4 outColor;
 
@@ -14,8 +15,8 @@ layout(push_constant) uniform constants {
 layout(binding = 1) uniform usampler3D texSampler;
 
 void main() {
-
     outColor = vec4(0);
+
     // TODO: Cache these in a UBO/PC?? They don't change after object instantiation!
     vec3 dimensions = vec3(20.0, 21.0, 20.0);
     vec3 jumps = 1.0 / dimensions;
@@ -115,11 +116,21 @@ void main() {
 
             float brightness = 0.1 + clamp(dot(norm, normalize(vec3(-3, 0, 1))), 0.0, 1.0);
             //outColor = vec4(brightness * texVal/255.0f, brightness, brightness, 1);
+
+
+            // TODO: Automatically compute near/far plane delta
+            // TODO: Get scale factor in the shader
+            float z = ((gl_FragCoord.z + t_total) / gl_FragCoord.w) / (10.0 - 0.1);
+            //float z2 = ((gl_FragCoord.z) / gl_FragCoord.w) / (2.0 - 0.1);
+            gl_FragDepth = z;
+            float tmp = z;
+            //outColor = vec4(tmp, tmp, tmp, 1);
             outColor = vec4(abs(tempNorm.xyz), 1.0);
             //outColor = vec4(brightness, brightness, brightness, 1);
 
             break;
         }
+        gl_FragDepth = 1.0;
     }
 
 

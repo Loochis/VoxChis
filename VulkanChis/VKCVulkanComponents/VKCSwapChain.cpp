@@ -11,13 +11,15 @@
 
 namespace VKChis {
     VKCSwapChain::VKCSwapChain(uint32_t in_flags,
-                               VkSurfaceKHR in_surface,
                                shared_ptr<VKCDevice> &in_device,
+                               shared_ptr<VKCCommandManager> &in_commandManager,
+                               VkSurfaceKHR in_surface,
                                GLFWwindow *in_window,
                                VkResult &result)
     :   flags(in_flags),
-        surface(in_surface),
         device(in_device),
+        commandManager(in_commandManager),
+        surface(in_surface),
         window(in_window),
         indices(device->indices),
         swapChainSupport(device->swapChainSupport)
@@ -76,9 +78,15 @@ namespace VKChis {
         swapChainImages.resize(imageCount);
         vkGetSwapchainImagesKHR(device->device, swapChain, &imageCount, swapChainImages.data());
 
-        swapChainImageFormat = surfaceFormat.format;
+        format_swapChainImage = surfaceFormat.format;
+        format_depth = findDepthFormat();
         swapChainExtent = extent;
 
+        // Create the depth image / views
+        image_depth = make_unique<VKCImage>(flags, device, extent.width, extent.height, 1, format_depth, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+        // transition the depth image to depth attachment
+        image_depth->transitionImageLayout(commandManager, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
         // IMAGE VIEWS
 
         createImageViews();
@@ -128,6 +136,30 @@ namespace VKChis {
         }
     }
 
+    VkFormat VKCSwapChain::findDepthFormat() {
+        return findSupportedFormat(
+                {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+                VK_IMAGE_TILING_OPTIMAL,
+                VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+        );
+    }
+
+    // TODO: Move all of the feature checks to a class or header or something idfk
+    VkFormat VKCSwapChain::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
+        for (VkFormat format : candidates) {
+            VkFormatProperties props;
+            vkGetPhysicalDeviceFormatProperties(device->physicalDevice, format, &props);
+
+            if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+                return format;
+            } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+                return format;
+            }
+        }
+
+        throw std::runtime_error("failed to find supported format!");
+    }
+
     void VKCSwapChain::createImageViews() {
         swapChainImageViews.resize(swapChainImages.size());
         for (size_t i = 0; i < swapChainImages.size(); i++) {
@@ -136,7 +168,7 @@ namespace VKChis {
             createInfo.image = swapChainImages[i];
 
             createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            createInfo.format = swapChainImageFormat;
+            createInfo.format = format_swapChainImage;
 
             createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -167,13 +199,14 @@ namespace VKChis {
 
         for (size_t i = 0; i < swapChainImageViews.size(); i++) {
             vector<VkImageView> attachments = {
-                    swapChainImageViews[i]
+                    swapChainImageViews[i],
+                    image_depth->imageView
             };
 
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = renderPass;
-            framebufferInfo.attachmentCount = 1;
+            framebufferInfo.attachmentCount = attachments.size();
             framebufferInfo.pAttachments = attachments.data();
             framebufferInfo.width = swapChainExtent.width;
             framebufferInfo.height = swapChainExtent.height;

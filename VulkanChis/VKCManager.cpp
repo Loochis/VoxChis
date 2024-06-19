@@ -62,23 +62,23 @@ namespace VKChis {
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Logical Device!");
         if (enableValidation)  print_colored("/// GOOD /// - Created Logical Device", GREEN);
 
+        // Create Command Pool (Used for image transitions and buffer copies)
+        commandManager = make_shared<VKCCommandManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
+        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Command Manager!");
+        if (enableValidation)  print_colored("/// GOOD /// - Created Command Manager", GREEN);
+
         // Create Swap Chain
-        swapChain = std::make_shared<VKCSwapChain>(flags, surface->surface, device, window->window, result);
+        swapChain = std::make_shared<VKCSwapChain>(flags, device, commandManager, surface->surface, window->window, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create SwapChain!");
         if (enableValidation)  print_colored("/// GOOD /// - Created SwapChain", GREEN);
 
         // Create Render Pass
-        renderPass = std::make_unique<VKCRenderPass>(flags, device, swapChain->swapChainImageFormat, result);
+        renderPass = std::make_shared<VKCRenderPass>(flags, device, swapChain, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Render Pass!");
         if (enableValidation)  print_colored("/// GOOD /// - Created Render Pass", GREEN);
 
         // Create Framebuffer
         swapChain->createFrameBuffers(renderPass->renderPass);
-
-        // Create Command Pool
-        commandManager = make_shared<VKCCommandManager>(flags, device, MAX_FRAMES_IN_FLIGHT, result);
-        if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to create Command Manager!");
-        if (enableValidation)  print_colored("/// GOOD /// - Created Command Manager", GREEN);
 
         // Asset Manager
         // Load assets
@@ -185,7 +185,7 @@ namespace VKChis {
 
         // DO IMGUI STUFF
 
-        userInterface = make_unique<VKCUserInterface>(device, instance, swapChain, surface, window, descriptorManager);
+        userInterface = make_unique<VKCUserInterface>(device, instance, swapChain, surface, window, renderPass, descriptorManager);
 
         // Create stats instance
 
@@ -239,7 +239,8 @@ namespace VKChis {
         ImGui::Text("FrameTime (µS): %.1f", stats->roll_frametime);               // Display some text (you can use a format strings too)
         ImGui::PlotLines("FrameTimes", samples, 100, 0);
 
-        ImGui::SliderFloat("float", &testslider, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat("speeeen", &testslider, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat("camZoom", &camZoom, 1.0f, 10.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
         ImGui::End();
 
         ImGui::Render();
@@ -301,28 +302,23 @@ namespace VKChis {
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-        viewMat = glm::lookAt(glm::vec3(0.0f, 5.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        viewMat = glm::lookAt(glm::vec3(0.0f, camZoom, camZoom), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
         projMat = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float) swapChain->swapChainExtent.height, 0.1f, 10.0f);
         projMat[1][1] *= -1;
 
-        obj1Mat = glm::translate(glm::mat4(1.0f), glm::vec3(2, 0, 0));
-        obj1Mat = glm::rotate(obj1Mat, time * glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
-        obj1Mat = glm::rotate(obj1Mat, time * glm::radians(32.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-        obj1Mat = glm::scale(obj1Mat, glm::vec3(0.1f, 0.1f, 0.1f));
-
         for (int i = 0; i < numObjs; i++) {
             float tval = (float)i/(float)numObjs;
-            objMats[i] = glm::translate(glm::mat4(1.0f), glm::vec3(lerp(0,2,tval), 0, 0));
-            objMats[i] = glm::rotate(objMats[i], time * glm::radians(lerp(45,90,tval)), glm::vec3(0.0f, 0.0f, 1.0f));
-            objMats[i] = glm::rotate(objMats[i], time * glm::radians(lerp(20,32,tval)), glm::vec3(0.0f, 1.0f, 0.0f));
+            objMats[i] = glm::translate(glm::mat4(1.0f), glm::vec3(lerp(0,2,tval), -(i/2)*2, 0));
+            //objMats[i] = glm::rotate(objMats[i], time * glm::radians(lerp(45,90,tval)), glm::vec3(0.0f, 0.0f, 1.0f));
+            objMats[i] = glm::rotate(objMats[i], time * glm::radians(lerp(20,32,tval)), glm::vec3(0.0f, 0.0f, 1.0f));
             objMats[i] = glm::scale(objMats[i], glm::vec3(0.1f, 0.1f, 0.1f));
             objMatsInv[i] = glm::inverse(objMats[i]);
         }
 
 
         //obj1Mat = projMat * viewMat * obj1Mat;
-        obj2Mat = glm::translate(glm::mat4(1.0f), glm::vec3(-2, 0, 0));
+        obj2Mat = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
         obj2Mat = glm::rotate(obj2Mat, glm::radians(testslider), glm::vec3(0.0f, 0.0f, 1.0f));
         obj2Mat = glm::scale(obj2Mat, glm::vec3(0.10f, 0.10f, 0.10f));
 
@@ -349,9 +345,12 @@ namespace VKChis {
         gfxPassInfo.renderArea.offset = {0, 0};
         gfxPassInfo.renderArea.extent = swapChain->swapChainExtent;
 
-        VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-        gfxPassInfo.clearValueCount = 1;
-        gfxPassInfo.pClearValues = &clearColor;
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clearValues[1].depthStencil = {1.0f, 0};
+
+        gfxPassInfo.clearValueCount = clearValues.size();
+        gfxPassInfo.pClearValues = clearValues.data();
 
         vkCmdBeginRenderPass(commandBufferIn, &gfxPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -388,7 +387,7 @@ namespace VKChis {
                                 nullptr);
 
         for (int i = 0; i < numObjs; i++) {
-            camPos = glm::vec3(objMatsInv[i] * glm::vec4(0, 5, 5, 1));
+            camPos = glm::vec3(objMatsInv[i] * glm::vec4(0, camZoom, camZoom, 1));
             pushConstData.m_mat = objMats[i];
             pushConstData.im_campos = camPos;
             pushConstData.sp_size = testslider;
@@ -401,7 +400,7 @@ namespace VKChis {
             vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(36), 1, 0, 0, 0);
         }
 
-        camPos = glm::vec3(glm::inverse(obj2Mat) * glm::vec4(0, 5, 5, 1));
+        camPos = glm::vec3(glm::inverse(obj2Mat) * glm::vec4(0, camZoom, camZoom, 1));
         pushConstData.m_mat = obj2Mat;
         pushConstData.im_campos = camPos;
 
@@ -409,9 +408,10 @@ namespace VKChis {
         vkCmdPushConstants(commandBufferIn, graphicsPipeline->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstData), &pushConstData);
         vkCmdDrawIndexed(commandBufferIn, static_cast<uint32_t>(36), 1, 0, 0, 0);
 
-        vkCmdEndRenderPass(commandBufferIn);
+        //vkCmdEndRenderPass(commandBufferIn);
 
         // RENDER GUI
+
 
         VkRenderPassBeginInfo guiPassInfo = {};
         guiPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -422,12 +422,13 @@ namespace VKChis {
         guiPassInfo.clearValueCount = 1;
         guiPassInfo.pClearValues = &(userInterface->imgui_wd.ClearValue);
 
-        vkCmdBeginRenderPass(commandBufferIn, &guiPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        //vkCmdBeginRenderPass(commandBufferIn, &guiPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         // Record dear imgui primitives into command buffer
         ImGui_ImplVulkan_RenderDrawData(draw_data, commandBufferIn);
 
         vkCmdEndRenderPass(commandBufferIn);
+
 
 
         if (vkEndCommandBuffer(commandBufferIn) != VK_SUCCESS) {
@@ -450,7 +451,7 @@ namespace VKChis {
         swapChain.reset();
         VkResult result;
 
-        swapChain = std::make_unique<VKCSwapChain>(t_flags, surface->surface, device, window->window, result);
+        swapChain = std::make_unique<VKCSwapChain>(t_flags, device, commandManager, surface->surface, window->window, result);
         if (result) throw std::runtime_error("/// FATAL ERROR /// Failed to recreate SwapChain!");
 
         // Recreate framebuffer

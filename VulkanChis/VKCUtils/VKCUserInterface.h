@@ -16,6 +16,7 @@
 #include "../VKCVulkanComponents/VKCSwapChain.h"
 #include "../VKCVulkanComponents/WINChisInstance.h"
 #include "../VKCVulkanComponents/VKCDescriptorManager.h"
+#include "../VKCVulkanComponents/VKCRenderPass.h"
 
 using namespace VKChis;
 
@@ -26,7 +27,7 @@ public:
 
     VKCUserInterface(shared_ptr<VKCDevice> &in_device, shared_ptr<VKCInstance> &in_instance,
                      shared_ptr<VKCSwapChain> &in_swapchain, shared_ptr<VKCSurface> &in_surface, shared_ptr<WINChisInstance> &in_window,
-                     shared_ptr<VKCDescriptorManager> &in_descriptorManager);
+                     shared_ptr<VKCRenderPass> &in_renderPass, shared_ptr<VKCDescriptorManager> &in_descriptorManager);
 
     ~VKCUserInterface();
 
@@ -36,6 +37,7 @@ private:
     shared_ptr<VKCSwapChain> swapchain;
     shared_ptr<VKCSurface> surface;
     shared_ptr<WINChisInstance> window;
+    shared_ptr<VKCRenderPass> renderPass;
     shared_ptr<VKCDescriptorManager> descriptorManager;
 };
 

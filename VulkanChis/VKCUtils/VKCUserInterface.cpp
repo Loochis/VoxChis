@@ -6,12 +6,14 @@
 
 VKCUserInterface::VKCUserInterface(shared_ptr<VKCDevice> &in_device, shared_ptr<VKCInstance> &in_instance,
                                    shared_ptr<VKCSwapChain> &in_swapchain, shared_ptr<VKCSurface> &in_surface,
-                                   shared_ptr<WINChisInstance> &in_window, shared_ptr<VKCDescriptorManager> &in_descriptorManager)
+                                   shared_ptr<WINChisInstance> &in_window, shared_ptr<VKCRenderPass> &in_renderPass,
+                                   shared_ptr<VKCDescriptorManager> &in_descriptorManager)
   : device(in_device),
     instance(in_instance),
     swapchain(in_swapchain),
     surface(in_surface),
     window(in_window),
+    renderPass(in_renderPass),
     descriptorManager(in_descriptorManager)
     {
 
@@ -43,7 +45,7 @@ VKCUserInterface::VKCUserInterface(shared_ptr<VKCDevice> &in_device, shared_ptr<
     init_info.Queue = device->graphicsQueue;
     init_info.PipelineCache = VK_NULL_HANDLE;
     init_info.DescriptorPool = descriptorManager->descriptorPool;
-    init_info.RenderPass = imgui_wd.RenderPass;
+    init_info.RenderPass = renderPass->renderPass;
     init_info.Subpass = 0;
     init_info.MinImageCount = imgui_imgcount;
     init_info.ImageCount = imgui_wd.ImageCount;

@@ -10,6 +10,7 @@
 #include <memory>
 #include "VKCSwapChain.h"
 #include "VKCDevice.h"
+#include "VKCImage.h"
 
 namespace VKChis {
 
@@ -19,13 +20,13 @@ namespace VKChis {
     public:
         VkRenderPass renderPass;
 
-        VKCRenderPass(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, VkFormat in_swapChainImageFormat, VkResult &result);
+        VKCRenderPass(uint32_t in_flags, shared_ptr<VKCDevice> &in_device, shared_ptr<VKCSwapChain> &in_swapChain, VkResult &result);
         ~VKCRenderPass();
     private:
         uint32_t flags;
 
         shared_ptr<VKCDevice> device;
-        VkFormat swapChainImageFormat;
+        shared_ptr<VKCSwapChain> swapChain;
     };
 
 } // VKChis

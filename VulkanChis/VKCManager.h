@@ -50,7 +50,7 @@ namespace VKChis {
 
         vector<glm::mat4> objMats;
         vector<glm::mat4> objMatsInv;
-        int numObjs = 50;
+        int numObjs = 1;
 
         // CONST vals,
         const std::vector<const char*> deviceExtensions = {
@@ -63,13 +63,14 @@ namespace VKChis {
 
         const int MAX_FRAMES_IN_FLIGHT = 2;
 
+        // TODO: MAKE A BUNCH OF THESE GLOBAL VARIABLES !!IMPORTANT!!
         uint32_t flags;
         shared_ptr<WINChisInstance> window;
         shared_ptr<VKCInstance> instance;
         shared_ptr<VKCSurface> surface;
         shared_ptr<VKCDevice> device; // SHARED
         shared_ptr<VKCSwapChain> swapChain;
-        unique_ptr<VKCRenderPass> renderPass;
+        shared_ptr<VKCRenderPass> renderPass;
 
         shared_ptr<VKCDescriptorManager> descriptorManager;
 
@@ -86,6 +87,7 @@ namespace VKChis {
 
         // imgui testing
         float testslider = 0;
+        float camZoom = 1.9;
 
         int currentFrame = 0;
 
